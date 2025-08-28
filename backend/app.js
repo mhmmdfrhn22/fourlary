@@ -16,7 +16,7 @@ const pembinatLoreRoutes = require('./routes/pembinatLore');
 const pembinatAhliRoutes = require('./routes/pembinatAhli');
 
 // Import dan pasang route Role
-app.use('/api/user', userRoutes);
+app.use('/api/user', userRoutes);   
 app.use('/api/role', roleRoutes);
 app.use('/api/kategori', kategoriRoutes);
 app.use('/api/posts', postsRoutes);
@@ -27,4 +27,4 @@ app.use('/api/pembinat-jurusan', pembinatJurusanRoutes);
 app.use('/api/pembinat-lore', pembinatLoreRoutes);
 app.use('/api/pembinat-ahli', pembinatAhliRoutes);
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+app.listen(3000, () => console.log('Cihuyyyy'));
