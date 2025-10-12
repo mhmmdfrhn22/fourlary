@@ -1,11 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const postsController = require('../controllers/postsController');
+const upload = require('../middleware/upload'); // pakai konfigurasi upload.js yang sudah benar
 
+// ✅ Hitung total posts published
+router.get('/count', postsController.getPostsCount);
+
+// ✅ Ambil semua posts
 router.get('/', postsController.getAllPosts);
-router.post('/', postsController.createPost);
+
+// ✅ Buat post baru (pakai upload single 'foto')
+router.post('/', upload.single('foto'), postsController.createPost);
+
+// ✅ Ambil post berdasarkan id
 router.get('/:id', postsController.getPostById);
-router.put('/:id', postsController.updatePost);
+
+// ✅ Update post berdasarkan id (juga bisa update foto)
+router.put('/:id', upload.single('foto'), postsController.updatePost);
+
+// ✅ Hapus post berdasarkan id
 router.delete('/:id', postsController.deletePost);
 
 module.exports = router;

@@ -1,16 +1,15 @@
-import { GalleryVerticalEnd } from "lucide-react"
-import { LoginComponent } from "../components/login-component"
+import LoginComponent from "../components/login-component.jsx";
 
 export default function LoginPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       {/* Left side */}
-      <div className="flex flex-col gap-1 p-6 md:p-10">
+      <div className="flex flex-col gap-1 px-6 md:px-10">
         {/* Logo */}
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="/" className="flex items-center gap-2 font-medium">
             <div className="flex size-24 items-center justify-center rounded-md">
-            <img src="/src/assets/logofourlary.svg" alt="Image"/>
+              <img src="/src/assets/logofourlary.svg" alt="Image"/>
             </div>
           </a>
         </div>
@@ -32,5 +31,5 @@ export default function LoginPage() {
         />
       </div>
     </div>
-  )
+  );
 }

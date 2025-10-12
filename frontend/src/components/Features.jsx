@@ -1,35 +1,35 @@
 import {
-  ArrowPathIcon,
-  CloudArrowUpIcon,
-  FingerPrintIcon,
-  LockClosedIcon,
+  PhotoIcon,
+  PaperClipIcon,
+  NewspaperIcon,
+  AcademicCapIcon,
 } from '@heroicons/react/24/outline'
 
 // data fitur → gampang diubah nanti
 const features = [
   {
-    name: 'Push to deploy',
+    name: 'Profil Sekolah',
     description:
-      'Morbi viverra dui mi arcu sed. Tellus semper adipiscing suspendisse semper morbi.',
-    icon: CloudArrowUpIcon,
+      'Menampilkan informasi lengkap mengenai identitas sekolah, visi misi, serta data penting yang dapat diakses oleh calon siswa, orang tua, maupun masyarakat.',
+    icon: AcademicCapIcon,
   },
   {
-    name: 'SSL certificates',
+    name: 'Detail Jurusan',
     description:
-      'Sit quis amet rutrum tellus ullamcorper ultricies libero dolor eget.',
-    icon: LockClosedIcon,
+      'Berisi deskripsi tiap jurusan yang ada di sekolah beserta keunggulannya, termasuk prospek karier yang relevan.',
+    icon: PaperClipIcon,
   },
   {
-    name: 'Simple queues',
+    name: 'Berita Sekolah',
     description:
-      'Quisque est vel vulputate cursus. Risus proin diam nunc commodo.',
-    icon: ArrowPathIcon,
+      'Fitur untuk publikasi berita terbaru, pengumuman resmi, dan informasi kegiatan sekolah sehingga audiens selalu mendapatkan update.',
+    icon: NewspaperIcon,
   },
   {
-    name: 'Advanced security',
+    name: 'Galeri Sekolah',
     description:
-      'Arcu egestas dolor vel iaculis in ipsum mauris. Tincidunt mattis aliquet.',
-    icon: FingerPrintIcon,
+      'Menyajikan dokumentasi kegiatan sekolah dalam bentuk foto maupun video yang dapat diakses dengan tampilan interaktif.',
+    icon: PhotoIcon,
   },
 ]
 

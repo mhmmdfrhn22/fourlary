@@ -21,7 +21,7 @@ export default function Example() {
               Ayo Mulai Jelajahi SMK Negeri 4 Bogor Bersama Fourlary 👀 
             </h2>
             <p className="mt-6 text-lg/8 text-pretty text-gray-500">
-              Ac euismod vel sit maecenas id pellentesque eu sed consectetur. Malesuada adipiscing sagittis vel nulla.
+              Jelajahi semua konten profile sekolah SMKN 4 Bogor yang tersedia di Fourlary 
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <a
@@ -31,7 +31,7 @@ export default function Example() {
                 {' '}
                 Lihat Galeri{' '}
               </a>
-              <a href="#" className="text-sm/6 font-semibold text-gray-500 hover:text-gray-900">
+              <a href="/login" className="text-sm/6 font-semibold text-gray-500 hover:text-gray-900">
                 Login Sekarang
                 <span aria-hidden="true">→</span>
               </a>

@@ -17,10 +17,10 @@ export default function Footer() {
 
           {/* Menu tengah */}
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm font-medium text-gray-700">
-            <a href="#" className="hover:text-black">About</a>
-            <a href="#" className="hover:text-black">Features</a>
-            <a href="#" className="hover:text-black">Works</a>
-            <a href="#" className="hover:text-black">Support</a>
+            <a href="#" className="hover:text-black">Beranda</a>
+            <a href="#" className="hover:text-black">Kontak Kami</a>
+            <a href="#" className="hover:text-black">Pembinat</a>
+            <a href="#" className="hover:text-black">Galeri Sekolah</a>
           </div>
 
           {/* Sosial Media */}
@@ -53,16 +53,6 @@ export default function Footer() {
                 viewBox="0 0 24 24"
               >
                 <path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.6 0 3 1.4 3 3v10c0 1.6-1.4 3-3 3H7c-1.6 0-3-1.4-3-3V7c0-1.6 1.4-3 3-3h10zm-5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm4.8-.9a1.2 1.2 0 11-2.4 0 1.2 1.2 0 012.4 0z" />
-              </svg>
-            </a>
-            <a href="#" className="text-gray-500 hover:text-black">
-              <span className="sr-only">GitHub</span>
-              <svg
-                className="h-5 w-5"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 7 9.7.5.1.6-.2.6-.4v-1.5c-2.8.6-3.4-1.3-3.4-1.3-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.4 1.2 3 .9.1-.7.3-1.2.6-1.5-2.2-.3-4.5-1.1-4.5-5a3.8 3.8 0 011-2.6c-.1-.2-.4-1.1.1-2.2 0 0 .8-.3 2.6 1a9.1 9.1 0 014.8 0c1.8-1.3 2.6-1 2.6-1 .5 1.1.2 2 .1 2.2a3.8 3.8 0 011 2.6c0 3.9-2.3 4.7-4.5 5 .3.3.6.9.6 1.8v2.7c0 .2.1.5.6.4 4.1-1.4 7-5.2 7-9.7C22 6.6 17.5 2 12 2z" />
               </svg>
             </a>
           </div>
