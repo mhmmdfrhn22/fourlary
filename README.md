@@ -20,17 +20,17 @@
 
 ---
 
-## 🛠️ Teknologi (contoh)
-- Frontend Web: React / Next.js, Tailwind CSS (shadcn)
+## 🛠️ Teknologi
+- Frontend Web: React, Tailwind CSS (shadcn)
 - Frontend Mobile: Flutter
-- Backend: Node.js, Express
-- Database: MySQL atau MongoDB
+- Backend: Express
+- Database: MySQL
 - Autentikasi: JWT
 - API: RESTful (JSON)
 
 ---
 
-## 🚀 Cara Menjalankan (Contoh)
+## 🚀 Cara Menjalankan 
 
 ### Backend
 ```bash
