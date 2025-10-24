@@ -6,6 +6,54 @@ const PDFDocument = require("pdfkit");
 
 // ✅ Ambil semua foto + kategori + uploader + jumlah like
 exports.getAllFoto = (req, res) => {
+  const { uploader_id } = req.query; // ← ambil dari query jika ada
+  let sql = `
+    SELECT 
+      f.id_foto,
+      f.id_kategori,
+      f.url_foto,
+      f.deskripsi,
+      f.tanggal_upload,
+      COALESCE(k.nama_kategori, '-') AS nama_kategori,
+      COALESCE(u.username, 'Admin') AS uploader,
+      COUNT(l.id_like) AS like_count
+    FROM foto_galeri f
+    LEFT JOIN kategori_foto k ON f.id_kategori = k.id_kategori
+    LEFT JOIN user u ON f.diupload_oleh = u.id
+    LEFT JOIN like_foto l ON f.id_foto = l.id_foto
+  `;
+
+  const params = [];
+
+  // kalau ada uploader_id → tambahkan WHERE
+  if (uploader_id) {
+    sql += " WHERE f.diupload_oleh = ?";
+    params.push(uploader_id);
+  }
+
+  sql += `
+    GROUP BY f.id_foto
+    ORDER BY f.tanggal_upload DESC
+  `;
+
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("🚨 SQL Error:", err);
+      return res.status(500).json({ message: err.message });
+    }
+    res.json(result);
+  });
+};
+
+
+// ✅ Ambil semua foto milik user tertentu (khusus PDD Sekolah)
+exports.getFotoByUploader = (req, res) => {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ message: "Parameter user_id wajib diisi" });
+  }
+
   const sql = `
     SELECT 
       f.id_foto,
@@ -20,11 +68,12 @@ exports.getAllFoto = (req, res) => {
     LEFT JOIN kategori_foto k ON f.id_kategori = k.id_kategori
     LEFT JOIN user u ON f.diupload_oleh = u.id
     LEFT JOIN like_foto l ON f.id_foto = l.id_foto
+    WHERE f.diupload_oleh = ?
     GROUP BY f.id_foto
     ORDER BY f.tanggal_upload DESC
   `;
 
-  db.query(sql, (err, result) => {
+  db.query(sql, [user_id], (err, result) => {
     if (err) {
       console.error("🚨 SQL Error:", err);
       return res.status(500).json({ message: err.message });
@@ -32,6 +81,20 @@ exports.getAllFoto = (req, res) => {
     res.json(result);
   });
 };
+
+
+// ✅ Hitung jumlah foto milik user tertentu
+exports.getFotoCountByUser = (req, res) => {
+  const { user_id } = req.params;
+  if (!user_id) return res.status(400).json({ message: "user_id wajib diisi" });
+
+  const sql = `SELECT COUNT(*) AS total FROM foto_galeri WHERE diupload_oleh = ?`;
+  db.query(sql, [user_id], (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    res.json({ total: result[0].total });
+  });
+};
+
 
 // ✅ Ambil foto berdasarkan ID
 exports.getFotoById = (req, res) => {
@@ -151,6 +214,7 @@ exports.getFotoCount = (req, res) => {
     res.json({ total: result[0].total });
   });
 };
+
 
 /**
  * GENERATE PDF REPORT — top N foto berdasar jumlah like

@@ -50,7 +50,15 @@ export default function ManajemenGaleri() {
 
   const fetchGaleri = async () => {
     try {
-      const res = await fetch(API_URL);
+      const user = JSON.parse(localStorage.getItem("user"));
+      let url = API_URL;
+
+      // jika role PDD (misalnya role === "pdd" atau role_id === 3)
+      if (user?.role === "pdd" || user?.role_id === 3) {
+        url += `?uploader_id=${user.id}`;
+      }
+
+      const res = await fetch(url);
       const galeri = await res.json();
       if (Array.isArray(galeri)) setData(galeri);
     } catch (err) {

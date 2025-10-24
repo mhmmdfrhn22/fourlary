@@ -56,9 +56,17 @@ export default function ManajemenBerita() {
   const [kategoriId, setKategoriId] = React.useState("");
   const [status, setStatus] = React.useState("draft");
 
-  // Ambil data awal
+  // 🔹 Ambil data awal
   React.useEffect(() => {
-    fetch(API_URL)
+    const user = JSON.parse(localStorage.getItem("user"));
+    let url = API_URL;
+
+    // Jika role PDD → hanya ambil berita user itu saja
+    if (user?.role === "pdd" || user?.role_id === 3) {
+      url += `?user_id=${user.id}`;
+    }
+
+    fetch(url)
       .then((r) => r.json())
       .then(setData)
       .catch(console.error);
@@ -77,7 +85,8 @@ export default function ManajemenBerita() {
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    formData.append("user_id", 1);
+    const user = JSON.parse(localStorage.getItem("user"));
+    formData.append("user_id", user?.id);
     formData.append("kategori_id", kategoriId);
     formData.append("status", status);
 
@@ -87,7 +96,10 @@ export default function ManajemenBerita() {
 
       Swal.fire("Berhasil!", "Berita berhasil ditambahkan.", "success");
 
-      const updated = await fetch(API_URL).then((r) => r.json());
+      // ✅ Ambil ulang data sesuai user login
+      const updated = await fetch(`${API_URL}?user_id=${user.id}`).then((r) =>
+        r.json()
+      );
       setData(updated);
 
       setKategoriId("");
@@ -119,7 +131,8 @@ export default function ManajemenBerita() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    formData.append("user_id", 1);
+    const user = JSON.parse(localStorage.getItem("user"));
+    formData.append("user_id", user?.id);
     formData.append("kategori_id", kategoriId || editPost.kategori_id);
     formData.append("status", status || editPost.status);
 
@@ -132,7 +145,10 @@ export default function ManajemenBerita() {
 
       Swal.fire("Berhasil!", "Berita berhasil diperbarui.", "success");
 
-      const updated = await fetch(API_URL).then((r) => r.json());
+      // ✅ Ambil ulang data sesuai user login
+      const updated = await fetch(`${API_URL}?user_id=${user.id}`).then((r) =>
+        r.json()
+      );
       setData(updated);
 
       setEditing(false);
@@ -302,7 +318,7 @@ export default function ManajemenBerita() {
         </Table>
       </div>
 
-      {/* 🔹 Dialog Edit */}
+      {/* Dialog Edit */}
       {editPost && (
         <Dialog open={editing} onOpenChange={setEditing}>
           <DialogContent>
@@ -318,67 +334,64 @@ export default function ManajemenBerita() {
                   <Input name="judul" defaultValue={editPost.judul} required />
                 </div>
 
-                  <div>
-                    <Label>Kategori</Label>
-                    <Select value={kategoriId} onValueChange={setKategoriId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih kategori" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={String(c.id)}>
-                            {c.nama || c.nama_kategori || c.judul}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Isi</Label>
-                    <textarea
-                      name="isi"
-                      defaultValue={editPost.isi}
-                      className="border rounded-md p-2 h-28 w-full"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Status</Label>
-                    <Select
-                      value={status}
-                      onValueChange={setStatus}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Gambar</Label>
-                    <Input type="file" name="foto" accept="image/*" />
-                    {editPost.foto && (
-                      <img
-                        src={`http://localhost:3000/uploads/berita/${editPost.foto}`}
-                        alt="foto"
-                        className="h-20 mt-2 rounded-md object-cover"
-                      />
-                    )}
-                  </div>
+                <div>
+                  <Label>Kategori</Label>
+                  <Select value={kategoriId} onValueChange={setKategoriId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.nama || c.nama_kategori || c.judul}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <DialogFooter className="mt-4">
-                  <DialogClose asChild>
-                    <Button variant="outline">Batal</Button>
-                  </DialogClose>
-                  <Button type="submit">Simpan Perubahan</Button>
-                </DialogFooter>
+                <div>
+                  <Label>Isi</Label>
+                  <textarea
+                    name="isi"
+                    defaultValue={editPost.isi}
+                    className="border rounded-md p-2 h-28 w-full"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label>Status</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Gambar</Label>
+                  <Input type="file" name="foto" accept="image/*" />
+                  {editPost.foto && (
+                    <img
+                      src={`http://localhost:3000/uploads/berita/${editPost.foto}`}
+                      alt="foto"
+                      className="h-20 mt-2 rounded-md object-cover"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <DialogFooter className="mt-4">
+                <DialogClose asChild>
+                  <Button variant="outline">Batal</Button>
+                </DialogClose>
+                <Button type="submit">Simpan Perubahan</Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>

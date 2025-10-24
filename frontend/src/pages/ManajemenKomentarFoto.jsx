@@ -20,27 +20,36 @@ export default function ManajemenKomentarFoto() {
   // 🔹 Fetch semua komentar
   React.useEffect(() => {
     const fetchKomentar = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const res = await fetch(API_URL)
-        if (!res.ok) throw new Error("Gagal memuat data komentar")
-        const komentar = await res.json()
-        if (Array.isArray(komentar)) setData(komentar)
+        const user = JSON.parse(localStorage.getItem("user"));
+        let url = API_URL;
+
+        // 🔹 Kalau PDD → ambil hanya komentar di foto miliknya
+        if (user?.role === "pdd" || user?.role_id === 3) {
+          url += `?uploader_id=${user.id}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Gagal memuat data komentar");
+        const komentar = await res.json();
+        if (Array.isArray(komentar)) setData(komentar);
       } catch (err) {
-        console.error(err)
-        setError(err.message)
+        console.error(err);
+        setError(err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchKomentar()
-  }, [])
+    };
+    fetchKomentar();
+  }, []);
+
 
   // 🔎 Filter by search
   const filteredData = data.filter(
     (komen) =>
-      (komen.username?.toLowerCase().includes(search.toLowerCase()) ||
-       komen.isi_komentar?.toLowerCase().includes(search.toLowerCase()))
+    (komen.username?.toLowerCase().includes(search.toLowerCase()) ||
+      komen.isi_komentar?.toLowerCase().includes(search.toLowerCase()))
   )
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)

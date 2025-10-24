@@ -13,8 +13,11 @@ import PembinatView from "./pages/PembinatView";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+
+// Dashboard Admin
 import Dashboard from "./pages/Dashboard";
 import DashboardHome from "./pages/DashboardHome";
+import DashboardHomePDD from "./pages/DashboardHomePDD";
 import ManajemenUser from "./pages/ManajemenUser";
 import ManajemenGaleri from "./pages/ManajemenGaleri";
 import ManajemenBerita from "./pages/ManajemenBerita";
@@ -25,15 +28,22 @@ import ManajemenJurusan from "./pages/ManajemenJurusan";
 import ManajemenPembimbing from "./pages/ManajemenPembimbing";
 import ManajemenPembinat from "./pages/ManajemenPembinat";
 import ManajemenGuru from "./pages/ManajemenGuru";
+
+// Dashboard PDD
 import DashboardPDD from "./pages/DashboardPDD";
+
+// Komponen lainnya
 import ProtectedRoute from "./components/ProtectedRoute";
 import BeritaDetail from "./pages/BeritaDetail";
 import JurusanSekolah from "./pages/JurusanSekolah";
 
 function App() {
   const location = useLocation();
+
+  // Sembunyikan Navbar & Footer di halaman dashboard, login, register
   const hideLayout =
     location.pathname.startsWith("/dashboard") ||
+    location.pathname.startsWith("/dashboard-pdd") ||
     location.pathname === "/login" ||
     location.pathname === "/register";
 
@@ -41,6 +51,7 @@ function App() {
     <>
       {!hideLayout && <Navbar />}
       <Routes>
+        {/* Halaman Utama */}
         <Route path="/" element={<Home />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/about" element={<About />} />
@@ -52,29 +63,38 @@ function App() {
         <Route path="/JurusanSekolah" element={<JurusanSekolah />} />
         <Route path="/berita/:id" element={<BeritaDetail />} />
         <Route path="/galeri/:id" element={<GalleryDetail />} />
+
+        {/* Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Dashboard Admin */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute roles={[2]}>
-            <Dashboard />
-          </ProtectedRoute>
-        }>
+        {/* ===================== */}
+        {/* DASHBOARD ADMIN (Role 2) */}
+        {/* ===================== */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute roles={[2]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<DashboardHome />} />
           <Route path="ManajemenUser" element={<ManajemenUser />} />
-          <Route path="ManajemenGaleri" element={<ManajemenGaleri />} />
-          <Route path="ManajemenBerita" element={<ManajemenBerita />} />
           <Route path="ManajemenGuru" element={<ManajemenGuru />} />
           <Route path="ManajemenPembinat" element={<ManajemenPembinat />} />
-          <Route path="ManajemenKategori" element={<ManajemenKategori />} />
-          <Route path="ManajemenKategoriFoto" element={<ManajemenKategoriFoto />} />
-          <Route path="ManajemenKomentarFoto" element={<ManajemenKomentarFoto />} />
           <Route path="ManajemenJurusan" element={<ManajemenJurusan />} />
           <Route path="ManajemenPembimbing" element={<ManajemenPembimbing />} />
+          <Route path="ManajemenGaleri" element={<ManajemenGaleri />} />
+          <Route path="ManajemenKategoriFoto" element={<ManajemenKategoriFoto />} />
+          <Route path="ManajemenKomentarFoto" element={<ManajemenKomentarFoto />} />
+          <Route path="ManajemenBerita" element={<ManajemenBerita />} />
+          <Route path="ManajemenKategori" element={<ManajemenKategori />} />
         </Route>
 
-        {/* Dashboard PDD */}
+        {/* ===================== */}
+        {/* DASHBOARD PDD SEKOLAH (Role 3) */}
+        {/* ===================== */}
         <Route
           path="/dashboard-pdd"
           element={
@@ -82,8 +102,16 @@ function App() {
               <DashboardPDD />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<DashboardHomePDD />} />
+          <Route path="ManajemenGaleri" element={<ManajemenGaleri />} />
+          <Route path="ManajemenKategoriFoto" element={<ManajemenKategoriFoto />} />
+          <Route path="ManajemenKomentarFoto" element={<ManajemenKomentarFoto />} />
+          <Route path="ManajemenBerita" element={<ManajemenBerita />} />
+          <Route path="ManajemenKategori" element={<ManajemenKategori />} />
+        </Route>
 
+        {/* Not Found */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!hideLayout && <Footer />}

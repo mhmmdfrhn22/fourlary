@@ -2,19 +2,73 @@ const db = require('../config/db');
 
 // GET semua komentar
 exports.getAllKomentar = (req, res) => {
+  const { uploader_id } = req.query; // ← tambahkan ini
+
+  let sql = `
+    SELECT kf.*, u.username, f.url_foto, f.deskripsi AS nama_foto
+    FROM komentar_foto kf
+    LEFT JOIN user u ON kf.id_user = u.id
+    LEFT JOIN foto_galeri f ON kf.id_foto = f.id_foto
+  `;
+
+  const params = [];
+
+  // 🔹 kalau ada uploader_id → filter hanya komentar untuk foto miliknya
+  if (uploader_id) {
+    sql += ` WHERE f.diupload_oleh = ?`;
+    params.push(uploader_id);
+  }
+
+  sql += ` ORDER BY kf.tanggal_komentar DESC`;
+
+  db.query(sql, params, (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    res.json(result);
+  });
+};
+
+
+// ✅ Hitung jumlah komentar yang diterima dari semua foto milik user
+exports.getKomentarCountByUser = (req, res) => {
+  const { user_id } = req.params;
+  if (!user_id) return res.status(400).json({ message: "user_id wajib diisi" });
+
+  const sql = `
+    SELECT COUNT(k.id_komentar) AS total
+    FROM komentar_foto k
+    JOIN foto_galeri f ON k.id_foto = f.id_foto
+    WHERE f.diupload_oleh = ?
+  `;
+  db.query(sql, [user_id], (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    res.json({ total: result[0].total });
+  });
+};
+
+
+// ✅ Ambil semua komentar untuk foto yang diupload oleh user tertentu (khusus PDD)
+exports.getKomentarByUploader = (req, res) => {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ message: "Parameter user_id wajib diisi" });
+  }
+
   const sql = `
     SELECT kf.*, u.username, f.url_foto, f.deskripsi AS nama_foto
     FROM komentar_foto kf
     LEFT JOIN user u ON kf.id_user = u.id
     LEFT JOIN foto_galeri f ON kf.id_foto = f.id_foto
+    WHERE f.diupload_oleh = ?
     ORDER BY kf.tanggal_komentar DESC
   `;
 
-  db.query(sql, (err, result) => {
+  db.query(sql, [user_id], (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
     res.json(result);
   });
 };
+
 
 // GET komentar berdasarkan foto
 exports.getKomentarByFoto = (req, res) => {

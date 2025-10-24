@@ -1,17 +1,18 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'register_view.dart'; // pastikan file ini sudah ada
+import 'login_view.dart'; // biar bisa navigasi balik ke login
 
-class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+class RegisterView extends StatefulWidget {
+  const RegisterView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginPageState();
+  State<RegisterView> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginView> {
+class _RegisterPageState extends State<RegisterView> {
   bool _obscurePassword = true;
+  bool _agreeTerms = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class _LoginPageState extends State<LoginView> {
             children: [
               const SizedBox(height: 40),
               Text(
-                'Selamat Datang Kembali di Fourlary!👋',
+                'Selamat Bergabung Bersama Fourlary 👋',
                 style: GoogleFonts.poppins(
                   fontSize: 26,
                   fontWeight: FontWeight.w600,
@@ -34,7 +35,7 @@ class _LoginPageState extends State<LoginView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Masuk ke akunmu untuk melanjutkan perjalananmu\nbersama Fourlary.',
+                'Buat akunmu dan mulai untuk perjalanan barumu\nbersama Fourlary.',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   color: Colors.grey[600],
@@ -42,6 +43,15 @@ class _LoginPageState extends State<LoginView> {
                 ),
               ),
               const SizedBox(height: 40),
+
+              // Nama
+              Text(
+                'Nama Panggilan',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(decoration: _inputDecoration('Nama Lengkap')),
+              const SizedBox(height: 20),
 
               // Email
               Text(
@@ -79,25 +89,41 @@ class _LoginPageState extends State<LoginView> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // Lupa password
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'Lupa Password?',
-                    style: GoogleFonts.poppins(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.w500,
+              // Checkbox
+              Row(
+                children: [
+                  Checkbox(
+                    value: _agreeTerms,
+                    onChanged: (v) => setState(() => _agreeTerms = v!),
+                    activeColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                ),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        text: 'Saya setuju dengan ',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                        children: [
+                          TextSpan(
+                            text: 'Kebijakan Privasi',
+                            style: GoogleFonts.poppins(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
-              // Tombol login
+              // Tombol daftar
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -108,9 +134,9 @@ class _LoginPageState extends State<LoginView> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: _agreeTerms ? () {} : null,
                   child: Text(
-                    'Masuk',
+                    'Daftar',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -120,25 +146,25 @@ class _LoginPageState extends State<LoginView> {
               ),
               const SizedBox(height: 32),
 
-              // Belum punya akun?
+              // Sudah punya akun
               Center(
                 child: Text.rich(
                   TextSpan(
-                    text: 'Belum punya akun? ',
+                    text: 'Sudah punya akun? ',
                     style: GoogleFonts.poppins(color: Colors.black87),
                     children: [
                       TextSpan(
-                        text: 'Daftar di sini.',
+                        text: 'Masuk di sini.',
                         style: GoogleFonts.poppins(
                           color: Colors.blue,
                           fontWeight: FontWeight.w500,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RegisterView(),
+                                builder: (context) => const LoginView(),
                               ),
                             );
                           },

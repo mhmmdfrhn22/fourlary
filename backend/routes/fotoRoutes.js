@@ -12,5 +12,7 @@ router.get("/:id", fotoCtrl.getFotoById);
 router.post("/", upload.single("foto"), fotoCtrl.createFoto);
 router.put("/:id", upload.single("foto"), fotoCtrl.updateFoto);
 router.delete("/:id", fotoCtrl.deleteFoto);
+router.get("/user", fotoCtrl.getFotoByUploader);// 🔹 Ambil foto berdasarkan uploader
+router.get("/count/:user_id", fotoCtrl.getFotoCountByUser);
 
 module.exports = router;

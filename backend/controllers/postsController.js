@@ -4,20 +4,59 @@ const fs = require('fs');
 
 // ✅ Ambil semua post (join kategori + user)
 exports.getAllPosts = (req, res) => {
-  const sql = `
+  const { user_id } = req.query; // ← tambahkan ini
+
+  let sql = `
     SELECT p.id, p.judul, p.isi, p.foto, p.status, p.created_at, p.updated_at,
            k.judul AS kategori, 
            u.username AS penulis
     FROM posts p
     LEFT JOIN kategori k ON p.kategori_id = k.id
     LEFT JOIN user u ON p.user_id = u.id
-    ORDER BY p.created_at DESC
   `;
-  db.query(sql, (err, results) => {
+
+  const params = [];
+
+  // 🔹 kalau user_id dikirim, tampilkan hanya post milik user itu
+  if (user_id) {
+    sql += ` WHERE p.user_id = ?`;
+    params.push(user_id);
+  }
+
+  sql += ` ORDER BY p.created_at DESC`;
+
+  db.query(sql, params, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(results);
   });
 };
+
+// ✅ Ambil semua post milik user tertentu (khusus PDD Sekolah)
+exports.getPostsByUser = (req, res) => {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: "Parameter user_id wajib diisi" });
+  }
+
+  const sql = `
+    SELECT 
+      p.id, p.judul, p.isi, p.foto, p.status, p.created_at, p.updated_at,
+      k.judul AS kategori, 
+      u.username AS penulis
+    FROM posts p
+    LEFT JOIN kategori k ON p.kategori_id = k.id
+    LEFT JOIN user u ON p.user_id = u.id
+    WHERE p.user_id = ?
+    ORDER BY p.created_at DESC
+  `;
+
+  db.query(sql, [user_id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+};
+
 
 // ✅ Tambah post baru
 exports.createPost = (req, res) => {
@@ -147,4 +186,16 @@ exports.getPostsCount = (req, res) => {
       res.json({ total: results[0].total });
     }
   );
+};
+
+// ✅ Hitung jumlah berita milik user tertentu (PDD)
+exports.getPostCountByUser = (req, res) => {
+  const { user_id } = req.params;
+  if (!user_id) return res.status(400).json({ message: "user_id wajib diisi" });
+
+  const sql = `SELECT COUNT(*) AS total FROM posts WHERE user_id = ?`;
+  db.query(sql, [user_id], (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    res.json({ total: result[0].total });
+  });
 };

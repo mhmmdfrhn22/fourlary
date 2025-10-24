@@ -1,20 +1,48 @@
-import React from "react";
+"use client"
+
+import { AppSidebarPDD } from "@/components/app-sidebar-pdd"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+
+import { Outlet } from "react-router-dom"
 
 export default function DashboardPDD() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-3xl text-center">
-        <h1 className="text-3xl font-bold text-blue-600 mb-4">
-          Dashboard PDD Sekolah
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Selamat datang di dashboard khusus PDD Sekolah.  
-          Fitur-fitur utama akan segera ditambahkan di sini.
-        </p>
-        <div className="border-t pt-4 text-gray-500 text-sm">
-          © {new Date().getFullYear()} Fourlary. All rights reserved.
+    <SidebarProvider>
+      <AppSidebarPDD />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Dashboard PDD Sekolah</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          {/* Nested route PDD akan muncul di sini */}
+          <Outlet />
         </div>
-      </div>
-    </div>
-  );
+      </SidebarInset>
+    </SidebarProvider>
+  )
 }
