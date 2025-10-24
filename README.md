@@ -1,7 +1,7 @@
 # Fourlary
 
 
-**Fourlary** adalah aplikasi galeri sekolah berbasis **Web** dan **Mobile** yang memudahkan siswa, guru, dan pihak sekolah untuk berbagi, melihat, dan berinteraksi dengan dokumentasi kegiatan sekolah. Tersedia fitur interaktif seperti **like**, **komentar**, **berita sekolah**, **pembinat (pembimbing minat & bakat)**, **profil sekolah & guru**, serta **dashboard admin**.
+**Fourlary** adalah aplikasi galeri sekolah berbasis **Web** dan **Mobile** yang memudahkan siswa, guru, dan pihak sekolah untuk berbagi, melihat, dan berinteraksi dengan dokumentasi kegiatan sekolah. Tersedia fitur interaktif seperti **like**, **komentar**, **berita sekolah**, **pembinat (pembimbing minat & bakat)**, **profil sekolah & guru**, serta **dashboard admin**..
 
 ---
 
