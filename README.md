@@ -21,7 +21,7 @@
 ---
 
 ## 🛠️ Teknologi
-- Frontend Web: React, Tailwind CSS (shadcn)
+- Frontend Web: React, Tailwind CSS
 - Frontend Mobile: Flutter
 - Backend: Express
 - Database: MySQL
