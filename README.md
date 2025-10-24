@@ -68,5 +68,4 @@ JWT_SECRET=your_jwt_secret
 ## 👨‍💻 Developer
 
 Muhammad Farhan Abdullah — SMK Negeri 4 Bogor
-Email: email@example.com (ganti sesuai data)
-
+Email: farhanabdullah2210@gmail.com
