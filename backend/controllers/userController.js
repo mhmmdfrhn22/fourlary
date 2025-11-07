@@ -115,8 +115,6 @@ exports.getUsersCount = (req, res) => {
       console.error('SQL Error:', err); // Debug log
       return res.status(500).json({ error: err.message });
     }
-
-    console.log('Query Results:', results); // Debug log
     res.json({ total: results[0].total });
   });
 };

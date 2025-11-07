@@ -63,9 +63,6 @@ exports.getLikeStats = (req, res) => {
       console.error("SQL Error:", err);
       return res.status(500).json({ error: err.message });
     }
-
-    console.log("📊 Like stats results:", results); // ✅ buat cek hasil di terminal
-    res.json(results);
   });
 };
 

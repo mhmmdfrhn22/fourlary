@@ -50,13 +50,11 @@ export function ChartComponentPDD({ userId }) {
       setLoading(true)
       try {
         const url = `http://localhost:3000/api/like-foto/stats/${userId}?range=${timeRange}`
-        console.log("🌐 [ChartComponentPDD] Fetching data dari:", url)
 
         const res = await fetch(url)
         if (!res.ok) throw new Error("Gagal mengambil data perkembangan like")
 
         const data = await res.json()
-        console.log("🧩 [ChartComponentPDD] Data mentah dari backend:", data)
 
         // Pastikan data berbentuk array
         const safeData = Array.isArray(data) ? data : [data]
