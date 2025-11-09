@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'register_view.dart'; // pastikan file ini sudah ada
+import 'package:provider/provider.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import 'register_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -12,9 +14,48 @@ class LoginView extends StatefulWidget {
 
 class _LoginPageState extends State<LoginView> {
   bool _obscurePassword = true;
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  Future<void> _handleLogin() async {
+    final vm = Provider.of<AuthViewModel>(context, listen: false);
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Username dan password tidak boleh kosong'),
+        ),
+      );
+      return;
+    }
+
+    await vm.login(username, password);
+
+    if (vm.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(vm.error!), backgroundColor: Colors.red),
+      );
+    } else if (vm.user != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selamat datang, ${vm.user!.username}!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // ✅ arahkan langsung ke halaman home
+      Future.delayed(const Duration(milliseconds: 800), () {
+        Navigator.pushReplacementNamed(context, '/home');
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final vm = Provider.of<AuthViewModel>(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -43,15 +84,16 @@ class _LoginPageState extends State<LoginView> {
               ),
               const SizedBox(height: 40),
 
-              // Email
+              // Username
               Text(
-                'Email Anda',
+                'Username Anda',
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 6),
               TextFormField(
-                keyboardType: TextInputType.emailAddress,
-                decoration: _inputDecoration('example@email.com'),
+                controller: _usernameController,
+                keyboardType: TextInputType.text,
+                decoration: _inputDecoration('Masukkan username'),
               ),
               const SizedBox(height: 20),
 
@@ -62,6 +104,7 @@ class _LoginPageState extends State<LoginView> {
               ),
               const SizedBox(height: 6),
               TextFormField(
+                controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: _inputDecoration(
                   '************',
@@ -81,7 +124,6 @@ class _LoginPageState extends State<LoginView> {
               ),
               const SizedBox(height: 16),
 
-              // Lupa password
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -108,19 +150,27 @@ class _LoginPageState extends State<LoginView> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: () {},
-                  child: Text(
-                    'Masuk',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  onPressed: vm.isLoading ? null : _handleLogin,
+                  child: vm.isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Masuk',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 32),
 
-              // Belum punya akun?
               Center(
                 child: Text.rich(
                   TextSpan(

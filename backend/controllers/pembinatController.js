@@ -1,120 +1,63 @@
-const db = require("../config/db");
-const fs = require("fs");
-const path = require("path");
-
-// Lokasi folder upload
-const uploadDir = path.join(__dirname, "../uploads/pembinat");
+const pembinatService = require("../services/pembinatService");
 
 // ✅ GET semua pembinat
-exports.getAllPembinat = (req, res) => {
-  const sql = `
-    SELECT p.*, j.nama_jurusan, b.nama AS nama_pembimbing
-    FROM pembinat_pekerjaan p
-    LEFT JOIN jurusan_sekolah j ON p.id_jurusan = j.id_jurusan
-    LEFT JOIN pembimbing_profile b ON p.id_pembimbing = b.id_pembimbing
-    ORDER BY p.created_at DESC
-  `;
-  db.query(sql, (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json(result);
-  });
+exports.getAllPembinat = async (req, res) => {
+  try {
+    const data = await pembinatService.getAllPembinat();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// ✅ CREATE pembinat baru
-exports.createPembinat = (req, res) => {
-  const { nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing } = req.body;
-  const gambar_pekerjaan = req.file ? req.file.filename : null;
+// ✅ CREATE pembinat
+exports.createPembinat = async (req, res) => {
+  try {
+    const { nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing } = req.body;
+    const gambar_pekerjaan = req.file ? req.file.filename : null;
 
-  const sql = `
-    INSERT INTO pembinat_pekerjaan 
-    (nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing, gambar_pekerjaan)
-    VALUES (?, ?, ?, ?, ?)
-  `;
+    const id = await pembinatService.createPembinat({
+      nama_pekerjaan,
+      deskripsi,
+      id_jurusan,
+      id_pembimbing,
+      gambar_pekerjaan,
+    });
 
-  db.query(
-    sql,
-    [nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing, gambar_pekerjaan],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
-      res.json({ message: "✅ Pembinat berhasil ditambahkan", id: result.insertId });
-    }
-  );
+    res.status(201).json({ message: "✅ Pembinat berhasil ditambahkan", id });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ✅ UPDATE pembinat
-exports.updatePembinat = (req, res) => {
-  const { id } = req.params;
-  const { nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing } = req.body;
-  const gambarBaru = req.file ? req.file.filename : null;
+exports.updatePembinat = async (req, res) => {
+  try {
+    const { nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing } = req.body;
+    const gambarBaru = req.file ? req.file.filename : null;
 
-  db.query(
-    "SELECT gambar_pekerjaan FROM pembinat_pekerjaan WHERE id_pekerjaan = ?",
-    [id],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
-      if (result.length === 0)
-        return res.status(404).json({ message: "Data tidak ditemukan" });
+    const updated = await pembinatService.updatePembinat(req.params.id, {
+      nama_pekerjaan,
+      deskripsi,
+      id_jurusan,
+      id_pembimbing,
+      gambarBaru,
+    });
 
-      const gambarLama = result[0].gambar_pekerjaan;
-
-      let sql, params;
-      if (gambarBaru) {
-        sql = `
-          UPDATE pembinat_pekerjaan 
-          SET nama_pekerjaan=?, deskripsi=?, id_jurusan=?, id_pembimbing=?, gambar_pekerjaan=? 
-          WHERE id_pekerjaan=?
-        `;
-        params = [nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing, gambarBaru, id];
-      } else {
-        sql = `
-          UPDATE pembinat_pekerjaan 
-          SET nama_pekerjaan=?, deskripsi=?, id_jurusan=?, id_pembimbing=? 
-          WHERE id_pekerjaan=?
-        `;
-        params = [nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing, id];
-      }
-
-      db.query(sql, params, (err) => {
-        if (err) return res.status(500).json({ message: err.message });
-
-        // Hapus foto lama jika ada upload baru
-        if (gambarBaru && gambarLama) {
-          const oldPath = path.join(uploadDir, gambarLama);
-          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        }
-
-        res.json({ message: "✅ Pembinat berhasil diperbarui" });
-      });
-    }
-  );
+    if (!updated) return res.status(404).json({ message: "Data tidak ditemukan" });
+    res.json({ message: "✅ Pembinat berhasil diperbarui" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ✅ DELETE pembinat
-exports.deletePembinat = (req, res) => {
-  const { id } = req.params;
-
-  db.query(
-    "SELECT gambar_pekerjaan FROM pembinat_pekerjaan WHERE id_pekerjaan = ?",
-    [id],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
-      if (result.length === 0)
-        return res.status(404).json({ message: "Data tidak ditemukan" });
-
-      const gambar = result[0].gambar_pekerjaan;
-
-      // Hapus data dari database
-      db.query("DELETE FROM pembinat_pekerjaan WHERE id_pekerjaan = ?", [id], (err2) => {
-        if (err2) return res.status(500).json({ message: err2.message });
-
-        // Hapus file fisik dari folder
-        if (gambar) {
-          const filePath = path.join(uploadDir, gambar);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        }
-
-        res.json({ message: "🗑️ Pembinat dan fotonya berhasil dihapus" });
-      });
-    }
-  );
+exports.deletePembinat = async (req, res) => {
+  try {
+    const deleted = await pembinatService.deletePembinat(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Data tidak ditemukan" });
+    res.json({ message: "🗑️ Pembinat dan fotonya berhasil dihapus" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };

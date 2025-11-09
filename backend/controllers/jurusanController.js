@@ -1,45 +1,48 @@
-const db = require("../config/db");
+const jurusanService = require("../services/jurusanService");
 
+// ✅ Ambil semua jurusan
 exports.getAllJurusan = (req, res) => {
-  db.query("SELECT * FROM jurusan_sekolah", (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
+  jurusanService.getAllJurusan((err, result) => {
+    if (err) return res.status(500).json({ message: "Gagal mengambil data jurusan", error: err });
     res.json(result);
   });
 };
 
+// ✅ Tambah jurusan baru
 exports.createJurusan = (req, res) => {
   const { nama_jurusan } = req.body;
-  db.query(
-    "INSERT INTO jurusan_sekolah (nama_jurusan) VALUES (?)",
-    [nama_jurusan],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
-      res.json({ message: "Jurusan berhasil ditambahkan" });
-    }
-  );
+
+  if (!nama_jurusan) {
+    return res.status(400).json({ message: "Nama jurusan harus diisi" });
+  }
+
+  jurusanService.createJurusan(nama_jurusan, (err, result) => {
+    if (err) return res.status(500).json({ message: "Gagal menambah jurusan", error: err.message });
+    res.status(201).json({ message: "Jurusan berhasil ditambahkan", id: result.insertId });
+  });
 };
 
+// ✅ Update jurusan
 exports.updateJurusan = (req, res) => {
   const { id } = req.params;
   const { nama_jurusan } = req.body;
-  db.query(
-    "UPDATE jurusan_sekolah SET nama_jurusan = ? WHERE id_jurusan = ?",
-    [nama_jurusan, id],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
-      res.json({ message: "Jurusan berhasil diubah" });
-    }
-  );
+
+  if (!nama_jurusan) {
+    return res.status(400).json({ message: "Nama jurusan harus diisi" });
+  }
+
+  jurusanService.updateJurusan(id, nama_jurusan, (err) => {
+    if (err) return res.status(500).json({ message: "Gagal mengubah jurusan", error: err.message });
+    res.json({ message: "Jurusan berhasil diubah" });
+  });
 };
 
+// ✅ Hapus jurusan
 exports.deleteJurusan = (req, res) => {
   const { id } = req.params;
-  db.query(
-    "DELETE FROM jurusan_sekolah WHERE id_jurusan = ?",
-    [id],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
-      res.json({ message: "Jurusan berhasil dihapus" });
-    }
-  );
+
+  jurusanService.deleteJurusan(id, (err) => {
+    if (err) return res.status(500).json({ message: "Gagal menghapus jurusan", error: err.message });
+    res.json({ message: "Jurusan berhasil dihapus" });
+  });
 };

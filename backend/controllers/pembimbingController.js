@@ -1,106 +1,76 @@
-const db = require("../config/db");
-const fs = require("fs");
-const path = require("path");
+const pembimbingService = require("../services/pembimbingService");
 
-const uploadDir = path.join(__dirname, "../uploads/pembimbing");
-
-// GET all pembimbing
-exports.getAllPembimbing = (req, res) => {
-  db.query("SELECT * FROM pembimbing_profile ORDER BY nama ASC", (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json(result);
-  });
+// ✅ GET semua pembimbing
+exports.getAllPembimbing = async (req, res) => {
+  try {
+    const data = await pembimbingService.getAllPembimbing();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// GET single pembimbing by id
-exports.getPembimbingById = (req, res) => {
-  const { id } = req.params;
-  db.query("SELECT * FROM pembimbing_profile WHERE id_pembimbing = ?", [id], (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (!result || result.length === 0) return res.status(404).json({ message: "Pembimbing tidak ditemukan" });
-    res.json(result[0]);
-  });
+// ✅ GET pembimbing by ID
+exports.getPembimbingById = async (req, res) => {
+  try {
+    const pembimbing = await pembimbingService.getPembimbingById(req.params.id);
+    if (!pembimbing) return res.status(404).json({ message: "Pembimbing tidak ditemukan" });
+    res.json(pembimbing);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// CREATE pembimbing
-exports.createPembimbing = (req, res) => {
-  const { nama, nomor_wa, link_wa, jabatan, deskripsi } = req.body;
-  const foto_pembimbing = req.file ? req.file.filename : null;
+// ✅ CREATE pembimbing
+exports.createPembimbing = async (req, res) => {
+  try {
+    const { nama, nomor_wa, link_wa, jabatan, deskripsi } = req.body;
+    const foto_pembimbing = req.file ? req.file.filename : null;
 
-  const sql = `INSERT INTO pembimbing_profile (nama, nomor_wa, link_wa, foto_pembimbing, jabatan, deskripsi)
-               VALUES (?, ?, ?, ?, ?, ?)`;
-  db.query(sql, [nama, nomor_wa, link_wa, foto_pembimbing, jabatan, deskripsi], (err, result) => {
-    if (err) {
-      console.error("createPembimbing error:", err);
-      return res.status(500).json({ message: err.message });
-    }
-    res.status(201).json({ message: "Pembimbing berhasil ditambahkan", id: result.insertId });
-  });
-};
-
-// UPDATE pembimbing
-exports.updatePembimbing = (req, res) => {
-  const { id } = req.params;
-  const { nama, nomor_wa, link_wa, jabatan, deskripsi } = req.body;
-  const fotoBaru = req.file ? req.file.filename : null;
-
-  // ambil foto lama
-  db.query("SELECT foto_pembimbing FROM pembimbing_profile WHERE id_pembimbing = ?", [id], (err, rows) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (!rows || rows.length === 0) return res.status(404).json({ message: "Pembimbing tidak ditemukan" });
-
-    const fotoLama = rows[0].foto_pembimbing;
-
-    let sql, params;
-    if (fotoBaru) {
-      sql = `UPDATE pembimbing_profile SET nama=?, nomor_wa=?, link_wa=?, jabatan=?, deskripsi=?, foto_pembimbing=? WHERE id_pembimbing=?`;
-      params = [nama, nomor_wa, link_wa, jabatan, deskripsi, fotoBaru, id];
-    } else {
-      sql = `UPDATE pembimbing_profile SET nama=?, nomor_wa=?, link_wa=?, jabatan=?, deskripsi=? WHERE id_pembimbing=?`;
-      params = [nama, nomor_wa, link_wa, jabatan, deskripsi, id];
-    }
-
-    db.query(sql, params, (err2) => {
-      if (err2) {
-        console.error("updatePembimbing error:", err2);
-        return res.status(500).json({ message: err2.message });
-      }
-
-      // jika ada foto baru, hapus foto lama file
-      if (fotoBaru && fotoLama) {
-        const oldPath = path.join(uploadDir, fotoLama);
-        if (fs.existsSync(oldPath)) {
-          try { fs.unlinkSync(oldPath); } catch (e) { console.warn("Gagal hapus foto lama:", e); }
-        }
-      }
-
-      res.json({ message: "Pembimbing berhasil diperbarui" });
+    const id = await pembimbingService.createPembimbing({
+      nama,
+      nomor_wa,
+      link_wa,
+      foto_pembimbing,
+      jabatan,
+      deskripsi,
     });
-  });
+
+    res.status(201).json({ message: "Pembimbing berhasil ditambahkan", id });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// DELETE pembimbing
-exports.deletePembimbing = (req, res) => {
-  const { id } = req.params;
+// ✅ UPDATE pembimbing
+exports.updatePembimbing = async (req, res) => {
+  try {
+    const { nama, nomor_wa, link_wa, jabatan, deskripsi } = req.body;
+    const fotoBaru = req.file ? req.file.filename : null;
 
-  // ambil foto dulu
-  db.query("SELECT foto_pembimbing FROM pembimbing_profile WHERE id_pembimbing = ?", [id], (err, rows) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (!rows || rows.length === 0) return res.status(404).json({ message: "Pembimbing tidak ditemukan" });
-
-    const foto = rows[0].foto_pembimbing;
-
-    db.query("DELETE FROM pembimbing_profile WHERE id_pembimbing = ?", [id], (err2) => {
-      if (err2) return res.status(500).json({ message: err2.message });
-
-      if (foto) {
-        const filePath = path.join(uploadDir, foto);
-        if (fs.existsSync(filePath)) {
-          try { fs.unlinkSync(filePath); } catch (e) { console.warn("Gagal hapus file:", e); }
-        }
-      }
-
-      res.json({ message: "Pembimbing berhasil dihapus" });
+    const updated = await pembimbingService.updatePembimbing(req.params.id, {
+      nama,
+      nomor_wa,
+      link_wa,
+      jabatan,
+      deskripsi,
+      fotoBaru,
     });
-  });
+
+    if (!updated) return res.status(404).json({ message: "Pembimbing tidak ditemukan" });
+    res.json({ message: "Pembimbing berhasil diperbarui" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ DELETE pembimbing
+exports.deletePembimbing = async (req, res) => {
+  try {
+    const deleted = await pembimbingService.deletePembimbing(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Pembimbing tidak ditemukan" });
+    res.json({ message: "Pembimbing berhasil dihapus" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };

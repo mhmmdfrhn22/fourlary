@@ -13,7 +13,7 @@ router.get('/:id', guruController.getGuruById);
 router.post('/', upload.single('foto_guru'), guruController.addGuru);
 
 // Update guru
-router.put('/:id', upload.single('foto_guru'), guruController.updateGuru);
+router.patch('/:id', upload.single('foto_guru'), guruController.updateGuru);
 
 // Hapus guru
 router.delete('/:id', guruController.deleteGuru);

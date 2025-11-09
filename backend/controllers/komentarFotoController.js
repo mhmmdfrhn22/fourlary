@@ -1,121 +1,76 @@
-const db = require('../config/db');
+// controllers/komentarController.js
+const komentarService = require("../services/komentarFotoService");
 
-// GET semua komentar
+// ✅ GET semua komentar
 exports.getAllKomentar = (req, res) => {
-  const { uploader_id } = req.query; // ← tambahkan ini
+  const { uploader_id } = req.query;
 
-  let sql = `
-    SELECT kf.*, u.username, f.url_foto, f.deskripsi AS nama_foto
-    FROM komentar_foto kf
-    LEFT JOIN user u ON kf.id_user = u.id
-    LEFT JOIN foto_galeri f ON kf.id_foto = f.id_foto
-  `;
-
-  const params = [];
-
-  // 🔹 kalau ada uploader_id → filter hanya komentar untuk foto miliknya
-  if (uploader_id) {
-    sql += ` WHERE f.diupload_oleh = ?`;
-    params.push(uploader_id);
-  }
-
-  sql += ` ORDER BY kf.tanggal_komentar DESC`;
-
-  db.query(sql, params, (err, result) => {
+  komentarService.getAllKomentar(uploader_id, (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
     res.json(result);
   });
 };
 
-
-// ✅ Hitung jumlah komentar yang diterima dari semua foto milik user
+// ✅ Hitung jumlah komentar yang diterima user
 exports.getKomentarCountByUser = (req, res) => {
   const { user_id } = req.params;
   if (!user_id) return res.status(400).json({ message: "user_id wajib diisi" });
 
-  const sql = `
-    SELECT COUNT(k.id_komentar) AS total
-    FROM komentar_foto k
-    JOIN foto_galeri f ON k.id_foto = f.id_foto
-    WHERE f.diupload_oleh = ?
-  `;
-  db.query(sql, [user_id], (err, result) => {
+  komentarService.getKomentarCountByUser(user_id, (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
     res.json({ total: result[0].total });
   });
 };
 
-
-// ✅ Ambil semua komentar untuk foto yang diupload oleh user tertentu (khusus PDD)
+// ✅ Komentar untuk semua foto milik user (khusus uploader)
 exports.getKomentarByUploader = (req, res) => {
   const { user_id } = req.query;
-
-  if (!user_id) {
+  if (!user_id)
     return res.status(400).json({ message: "Parameter user_id wajib diisi" });
-  }
 
-  const sql = `
-    SELECT kf.*, u.username, f.url_foto, f.deskripsi AS nama_foto
-    FROM komentar_foto kf
-    LEFT JOIN user u ON kf.id_user = u.id
-    LEFT JOIN foto_galeri f ON kf.id_foto = f.id_foto
-    WHERE f.diupload_oleh = ?
-    ORDER BY kf.tanggal_komentar DESC
-  `;
-
-  db.query(sql, [user_id], (err, result) => {
+  komentarService.getKomentarByUploader(user_id, (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
     res.json(result);
   });
 };
 
-
-// GET komentar berdasarkan foto
+// ✅ Komentar berdasarkan foto
 exports.getKomentarByFoto = (req, res) => {
   const { id_foto } = req.params;
-  const sql = `
-    SELECT kf.*, u.username
-    FROM komentar_foto kf
-    LEFT JOIN user u ON kf.id_user = u.id
-    WHERE kf.id_foto = ?
-    ORDER BY kf.tanggal_komentar DESC
-  `;
 
-  db.query(sql, [id_foto], (err, result) => {
+  komentarService.getKomentarByFoto(id_foto, (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
     res.json(result);
   });
 };
 
-// ADD komentar
+// ✅ Tambah komentar
 exports.createKomentar = (req, res) => {
   const { id_foto, id_user, isi_komentar } = req.body;
 
-  // Validasi data
   if (!id_foto || !id_user || !isi_komentar) {
-    return res.status(400).json({ message: 'Semua data harus diisi' });
+    return res.status(400).json({ message: "Semua data harus diisi" });
   }
 
-  const sql = 'INSERT INTO komentar_foto (id_foto, id_user, isi_komentar) VALUES (?, ?, ?)';
-  db.query(sql, [id_foto, id_user, isi_komentar], (err, result) => {
+  komentarService.createKomentar(id_foto, id_user, isi_komentar, (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
+
     res.status(201).json({
-      message: 'Komentar berhasil ditambahkan',
-      id: result.insertId
+      message: "Komentar berhasil ditambahkan",
+      id: result.insertId,
     });
   });
 };
 
-// DELETE komentar
+// ✅ Hapus komentar
 exports.deleteKomentar = (req, res) => {
   const { id } = req.params;
-  const sql = 'DELETE FROM komentar_foto WHERE id_komentar = ?';
 
-  db.query(sql, [id], (err, result) => {
+  komentarService.deleteKomentar(id, (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Komentar tidak ditemukan' });
-    }
-    res.json({ message: 'Komentar berhasil dihapus' });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Komentar tidak ditemukan" });
+
+    res.json({ message: "Komentar berhasil dihapus" });
   });
 };

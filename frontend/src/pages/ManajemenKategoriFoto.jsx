@@ -1,10 +1,17 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import * as React from "react";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableHead,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -14,86 +21,105 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import Swal from "sweetalert2"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import Swal from "sweetalert2";
 
-// 🔹 Ganti endpoint ke kategori foto
-const API_URL = "http://localhost:3000/api/kategori-foto"
+// 🔹 Endpoint API
+const API_URL = "http://localhost:3000/api/kategori-foto";
 
 export default function ManajemenKategoriFoto() {
-  const [data, setData] = React.useState([])
-  const [search, setSearch] = React.useState("")
-  const [editingKategori, setEditingKategori] = React.useState(null)
+  const [data, setData] = React.useState([]);
+  const [search, setSearch] = React.useState("");
+  const [editingKategori, setEditingKategori] = React.useState(null);
+  const [openAddDialog, setOpenAddDialog] = React.useState(false);
 
   // 🔹 Fetch kategori foto
-  React.useEffect(() => {
-    const fetchKategori = async () => {
-      try {
-        const res = await fetch(API_URL)
-        const kategori = await res.json()
-        if (Array.isArray(kategori)) setData(kategori)
-      } catch (err) {
-        console.error("Fetch kategori foto error:", err.message)
-      }
+  const fetchKategori = async () => {
+    try {
+      const res = await fetch(API_URL);
+      const kategori = await res.json();
+      if (Array.isArray(kategori)) setData(kategori);
+    } catch (err) {
+      console.error("Fetch kategori foto error:", err.message);
     }
-    fetchKategori()
-  }, [])
+  };
 
-  // 🔎 Filter by search
+  React.useEffect(() => {
+    fetchKategori();
+  }, []);
+
+  // 🔎 Filter pencarian
   const filteredData = data.filter((kat) =>
     (kat.nama_kategori || "").toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   // 🔹 Tambah kategori foto
   const handleAddSubmit = async (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.target)
-    const nama_kategori = formData.get("nama_kategori")
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const nama_kategori = formData.get("nama_kategori");
+    const dibuat_oleh = null; // bisa diisi user login nanti
 
     try {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama_kategori }),
-      })
+        body: JSON.stringify({ nama_kategori, dibuat_oleh }),
+      });
 
-      if (!res.ok) throw new Error("Gagal menambah kategori foto")
+      const dataRes = await res.json();
+      if (!res.ok) throw new Error(dataRes.message || "Gagal menambah kategori foto");
 
-      const newKat = await res.json()
-      setData([...data, newKat])
-      Swal.fire("Tersimpan!", "Kategori foto berhasil ditambahkan.", "success")
+      // Tambah ke state langsung
+      setData((prev) => [
+        ...prev,
+        {
+          id_kategori: dataRes.id || dataRes.id_kategori,
+          nama_kategori,
+          dibuat_oleh,
+        },
+      ]);
+
+      Swal.fire("Tersimpan!", "Kategori foto berhasil ditambahkan.", "success");
+      e.target.reset();
+      setOpenAddDialog(false); // ✅ tutup modal otomatis
     } catch (err) {
-      console.error("Add kategori foto error:", err)
+      console.error("Add kategori foto error:", err);
+      Swal.fire("Error", err.message || "Terjadi kesalahan saat menambah kategori.", "error");
     }
-  }
+  };
 
   // 🔹 Edit kategori foto
   const handleEditSubmit = async (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.target)
-    const nama_kategori = formData.get("nama_kategori")
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const nama_kategori = formData.get("nama_kategori");
 
     try {
       const res = await fetch(`${API_URL}/${editingKategori.id_kategori}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nama_kategori }),
-      })
+      });
 
-      if (!res.ok) throw new Error("Gagal update kategori foto")
+      if (!res.ok) throw new Error("Gagal update kategori foto");
 
-      setData(
+      setData((data) =>
         data.map((k) =>
-          k.id_kategori === editingKategori.id_kategori ? { ...k, nama_kategori } : k
+          k.id_kategori === editingKategori.id_kategori
+            ? { ...k, nama_kategori }
+            : k
         )
-      )
-      setEditingKategori(null)
-      Swal.fire("Tersimpan!", "Kategori foto berhasil diperbarui.", "success")
+      );
+
+      Swal.fire("Tersimpan!", "Kategori foto berhasil diperbarui.", "success");
+      setEditingKategori(null); // ✅ tutup modal edit
     } catch (err) {
-      console.error("Edit kategori foto error:", err)
+      console.error("Edit kategori foto error:", err);
+      Swal.fire("Error", err.message || "Terjadi kesalahan saat mengedit kategori.", "error");
     }
-  }
+  };
 
   // 🔹 Hapus kategori foto
   const handleDelete = (id_kategori) => {
@@ -108,15 +134,15 @@ export default function ManajemenKategoriFoto() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await fetch(`${API_URL}/${id_kategori}`, { method: "DELETE" })
-          setData(data.filter((kat) => kat.id_kategori !== id_kategori))
-          Swal.fire("Terhapus!", "Kategori foto berhasil dihapus.", "success")
+          await fetch(`${API_URL}/${id_kategori}`, { method: "DELETE" });
+          setData((prev) => prev.filter((kat) => kat.id_kategori !== id_kategori));
+          Swal.fire("Terhapus!", "Kategori foto berhasil dihapus.", "success");
         } catch (err) {
-          console.error("Delete kategori foto error:", err)
+          console.error("Delete kategori foto error:", err);
         }
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -136,9 +162,11 @@ export default function ManajemenKategoriFoto() {
         </div>
 
         {/* Tambah kategori foto */}
-        <Dialog>
+        <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
           <DialogTrigger asChild>
-            <Button className="h-9">+ Tambah Kategori</Button>
+            <Button className="h-9" onClick={() => setOpenAddDialog(true)}>
+              + Tambah Kategori
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -156,7 +184,7 @@ export default function ManajemenKategoriFoto() {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button variant="outline">Batal</Button>
                 </DialogClose>
                 <Button type="submit">Simpan</Button>
               </DialogFooter>
@@ -177,7 +205,7 @@ export default function ManajemenKategoriFoto() {
           </TableHeader>
           <TableBody>
             {filteredData.map((kat, index) => (
-              <TableRow key={kat.id_kategori}>
+              <TableRow key={kat.id_kategori || index}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{kat.nama_kategori}</TableCell>
                 <TableCell className="space-x-2">
@@ -208,9 +236,9 @@ export default function ManajemenKategoriFoto() {
                       <form onSubmit={handleEditSubmit}>
                         <div className="grid gap-4 py-2">
                           <div className="grid gap-2">
-                            <Label htmlFor="nama_kategori">Nama Kategori</Label>
+                            <Label htmlFor="nama_kategori_edit">Nama Kategori</Label>
                             <Input
-                              id="nama_kategori"
+                              id="nama_kategori_edit"
                               name="nama_kategori"
                               defaultValue={editingKategori?.nama_kategori}
                               required
@@ -219,7 +247,7 @@ export default function ManajemenKategoriFoto() {
                         </div>
                         <DialogFooter>
                           <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button variant="outline">Batal</Button>
                           </DialogClose>
                           <Button type="submit">Simpan</Button>
                         </DialogFooter>
@@ -243,5 +271,5 @@ export default function ManajemenKategoriFoto() {
         </Table>
       </div>
     </div>
-  )
+  );
 }

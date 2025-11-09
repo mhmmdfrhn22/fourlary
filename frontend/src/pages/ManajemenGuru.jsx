@@ -97,7 +97,7 @@ export default function ManajemenGuru() {
 
     try {
       const res = await fetch(`${API_URL}/${editingGuru.id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: formData,
       })
       if (!res.ok) throw new Error("Gagal update guru")

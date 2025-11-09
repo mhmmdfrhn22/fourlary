@@ -1,145 +1,135 @@
-const db = require('../config/db');
+const userService = require('../services/userService');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const jwtSecret = process.env.JWT_SECRET || 'rahasia';
 
-// Fungsi untuk membuat pengguna baru (Register)
+// ✅ Register user baru
+exports.createUser = async (req, res) => {
+  try {
+    const { username, password, role_id } = req.body;
+    if (!username || !password || !role_id)
+      return res.status(400).json({ error: 'Semua field wajib diisi' });
 
-exports.createUser = (req, res) => {
-  const { username, password, role_id } = req.body;
-  const hashedPassword = bcrypt.hashSync(password, 8);
-  db.query('INSERT INTO user (username, password, role_id) VALUES (?, ?, ?)', [username, hashedPassword, role_id], (err, results) => {
-    if (err) {
-      console.error("Database query error:", err);
-      return res.status(500).json({ error: 'Terjadi kesalahan server saat mendaftar.' });
-    }
-    res.status(201).json({ id: results.insertId, username, role_id });
-  });
+    const hashedPassword = bcrypt.hashSync(password, 8);
+    const result = await userService.createUser(username, hashedPassword, role_id);
+
+    res.status(201).json({ id: result.insertId, username, role_id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Hitung total tim publikasi (role_id = 3)
-exports.getPublikasiTeamCount = (req, res) => {
-  db.query('SELECT COUNT(*) AS total FROM user WHERE role_id = 3', (err, results) => {
-    if (err) {
-      console.error('SQL Error:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ total: results[0].total });
-  });
-};
+// ✅ Login user
+exports.loginUser = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await userService.getUserByUsername(username);
 
+    if (!user) return res.status(401).json({ error: 'User tidak ditemukan.' });
+    if (!bcrypt.compareSync(password, user.password))
+      return res.status(401).json({ error: 'Password salah.' });
 
-// Fungsi untuk login pengguna
-exports.loginUser = (req, res) => {
-  const { username, password } = req.body;
-  db.query('SELECT * FROM user WHERE username = ?', [username], (err, results) => {
-    if (err) {
-      console.error("Database query error:", err);
-      return res.status(500).json({ error: 'Terjadi kesalahan server saat login.' });
-    }
-    if (!results.length) return res.status(401).json({ error: 'User tidak ditemukan.' });
-    const user = results[0];
+    const token = jwt.sign(
+      { user_id: user.id, role_id: user.role_id },
+      jwtSecret,
+      { expiresIn: '1d' }
+    );
 
-    if (!bcrypt.compareSync(password, user.password)) {
-      return res.status(401).json({ error: 'Password salah' });
-    }
-
-    const token = jwt.sign({ user_id: user.id, role_id: user.role_id }, jwtSecret, { expiresIn: '1d' });
     res.json({ user, token });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Fungsi untuk mengambil semua pengguna
-exports.getAllUsers = (req, res) => {
-  db.query('SELECT * FROM user', (err, results) => {
-    if (err) {
-      console.error("Database query error:", err);
-      return res.status(500).json({ error: 'Terjadi kesalahan server saat mengambil data pengguna.' });
-    }
-    res.json(results);
-  });
+// ✅ Ambil semua user
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Fungsi untuk mengambil pengguna berdasarkan ID
-exports.getUserById = (req, res) => {
-  db.query('SELECT * FROM user WHERE id = ?', [req.params.id], (err, results) => {
-    if (err) {
-      console.error("Database query error:", err);
-      return res.status(500).json({ error: 'Terjadi kesalahan server saat mengambil data pengguna.' });
-    }
-    if (!results.length) return res.status(404).json({ error: 'User tidak ditemukan.' });
-    res.json(results[0]);
-  });
+// ✅ Ambil user berdasarkan ID
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await userService.getUserById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User tidak ditemukan.' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Fungsi untuk memperbarui pengguna
-exports.updateUser = (req, res) => {
-  const { username, password, role_id } = req.body;
-  const hashedPassword = bcrypt.hashSync(password, 8);
-  db.query('UPDATE user SET username = ?, password = ?, role_id = ? WHERE id = ?', [username, hashedPassword, role_id, req.params.id], (err) => {
-    if (err) {
-      console.error("Database query error:", err);
-      return res.status(500).json({ error: 'Terjadi kesalahan server saat memperbarui pengguna.' });
-    }
+// ✅ Update user
+exports.updateUser = async (req, res) => {
+  try {
+    const { username, password, role_id } = req.body;
+    const hashedPassword = bcrypt.hashSync(password, 8);
+
+    const result = await userService.updateUser(req.params.id, username, hashedPassword, role_id);
+    if (!result.affectedRows)
+      return res.status(404).json({ error: 'User tidak ditemukan.' });
+
     res.json({ message: 'User berhasil diperbarui' });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Fungsi untuk menghapus pengguna
-exports.deleteUser = (req, res) => {
-  db.query('DELETE FROM user WHERE id = ?', [req.params.id], (err) => {
-    if (err) {
-      console.error("Database query error:", err);
-      return res.status(500).json({ error: 'Terjadi kesalahan server saat menghapus pengguna.' });
-    }
+// ✅ Delete user
+exports.deleteUser = async (req, res) => {
+  try {
+    const result = await userService.deleteUser(req.params.id);
+    if (!result.affectedRows)
+      return res.status(404).json({ error: 'User tidak ditemukan.' });
+
     res.json({ message: 'User berhasil dihapus' });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Fungsi untuk mengambil user dari token (current user)
-exports.getMe = (req, res) => {
-  const userId = req.user.user_id; 
-  db.query('SELECT id, username, role_id FROM user WHERE id = ?', [userId], (err, results) => {
-    if (err) {
-      console.error("Database query error:", err);
-      return res.status(500).json({ error: 'Terjadi kesalahan server.' });
-    }
-    if (!results.length) return res.status(404).json({ error: 'User tidak ditemukan.' });
-    res.json(results[0]);
-  });
+// ✅ Hitung total user
+exports.getUsersCount = async (req, res) => {
+  try {
+    const total = await userService.getUsersCount();
+    res.json({ total });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-exports.getUsersCount = (req, res) => {
-  db.query('SELECT COUNT(*) AS total FROM user', (err, results) => {
-    if (err) {
-      console.error('SQL Error:', err); // Debug log
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ total: results[0].total });
-  });
+// ✅ Hitung total tim publikasi (role_id = 3)
+exports.getPublikasiTeamCount = async (req, res) => {
+  try {
+    const total = await userService.getPublikasiTeamCount();
+    res.json({ total });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-exports.getUserStats = (req, res) => {
-  let { range } = req.query;
-  if (!range) range = "7d";
+// ✅ Statistik user by date
+exports.getUserStats = async (req, res) => {
+  try {
+    const range = req.query.range || '7d';
+    const stats = await userService.getUserStats(range);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
-  let interval = 7;
-  if (range === "14d") interval = 14;
-  else if (range === "30d") interval = 30;
-
-  const sql = `
-    SELECT DATE(created_at) as date, COUNT(*) as total
-    FROM user
-    WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-    GROUP BY DATE(created_at)
-    ORDER BY date ASC
-  `;
-
-  db.query(sql, [interval], (err, results) => {
-    if (err) {
-      console.error("SQL Error:", err);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(results);
-  });
+// ✅ Get current user dari token
+exports.getMe = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const user = await userService.getUserById(userId);
+    if (!user) return res.status(404).json({ error: 'User tidak ditemukan.' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };

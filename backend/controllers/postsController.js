@@ -1,201 +1,131 @@
-const db = require('../config/db');
-const path = require('path');
-const fs = require('fs');
+const postService = require('../services/postsService');
 
-// ✅ Ambil semua post (join kategori + user)
-exports.getAllPosts = (req, res) => {
-  const { user_id } = req.query; // ← tambahkan ini
-
-  let sql = `
-    SELECT p.id, p.judul, p.isi, p.foto, p.status, p.created_at, p.updated_at,
-           k.judul AS kategori, 
-           u.username AS penulis
-    FROM posts p
-    LEFT JOIN kategori k ON p.kategori_id = k.id
-    LEFT JOIN user u ON p.user_id = u.id
-  `;
-
-  const params = [];
-
-  // 🔹 kalau user_id dikirim, tampilkan hanya post milik user itu
-  if (user_id) {
-    sql += ` WHERE p.user_id = ?`;
-    params.push(user_id);
+exports.getAllPosts = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    const posts = await postService.getAllPosts(user_id);
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  sql += ` ORDER BY p.created_at DESC`;
-
-  db.query(sql, params, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
 };
 
-// ✅ Ambil semua post milik user tertentu (khusus PDD Sekolah)
-exports.getPostsByUser = (req, res) => {
-  const { user_id } = req.query;
-
-  if (!user_id) {
-    return res.status(400).json({ error: "Parameter user_id wajib diisi" });
-  }
-
-  const sql = `
-    SELECT 
-      p.id, p.judul, p.isi, p.foto, p.status, p.created_at, p.updated_at,
-      k.judul AS kategori, 
-      u.username AS penulis
-    FROM posts p
-    LEFT JOIN kategori k ON p.kategori_id = k.id
-    LEFT JOIN user u ON p.user_id = u.id
-    WHERE p.user_id = ?
-    ORDER BY p.created_at DESC
-  `;
-
-  db.query(sql, [user_id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
-};
-
-
-// ✅ Tambah post baru
-exports.createPost = (req, res) => {
-  const { judul, kategori_id, isi, user_id, status } = req.body;
-  const foto = req.file ? req.file.filename : null;
-
-  if (!judul || !kategori_id || !isi || !user_id) {
-    return res
-      .status(400)
-      .json({ error: 'Judul, kategori, isi, dan user wajib diisi' });
-  }
-
-  const finalStatus = (status || 'draft').toLowerCase();
-
-  const sql = `
-    INSERT INTO posts (judul, kategori_id, isi, user_id, status, foto) 
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
-
-  db.query(
-    sql,
-    [judul, kategori_id, isi, user_id, finalStatus, foto],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err.message });
-
-      res.status(201).json({
-        id: results.insertId,
-        judul,
-        kategori_id,
-        isi,
-        user_id,
-        status: finalStatus,
-        foto,
-        message: 'Post berhasil ditambahkan',
-      });
-    }
-  );
-};
-
-// ✅ Ambil detail post by ID
-exports.getPostById = (req, res) => {
-  const sql = `
-    SELECT p.id, p.judul, p.isi, p.foto, p.status, p.created_at, p.updated_at,
-           k.judul AS kategori, 
-           u.username AS penulis
-    FROM posts p
-    LEFT JOIN kategori k ON p.kategori_id = k.id
-    LEFT JOIN user u ON p.user_id = u.id
-    WHERE p.id = ?
-  `;
-  db.query(sql, [req.params.id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
+exports.getPostById = async (req, res) => {
+  try {
+    const results = await postService.getPostById(req.params.id);
     if (!results.length)
       return res.status(404).json({ error: 'Post tidak ditemukan' });
     res.json(results[0]);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ✅ Update post
-exports.updatePost = (req, res) => {
-  const { judul, kategori_id, isi, user_id, status } = req.body;
-  const newFoto = req.file ? req.file.filename : null;
-  const id = req.params.id;
+exports.createPost = async (req, res) => {
+  try {
+    const { judul, kategori_id, isi, user_id, status } = req.body;
+    const foto = req.file ? req.file.filename : null;
 
-  db.query('SELECT foto FROM posts WHERE id = ?', [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (!judul || !kategori_id || !isi || !user_id)
+      return res.status(400).json({ error: 'Judul, kategori, isi, dan user wajib diisi' });
+
+    const finalStatus = (status || 'draft').toLowerCase();
+    const result = await postService.createPost({
+      judul,
+      kategori_id,
+      isi,
+      user_id,
+      status: finalStatus,
+      foto,
+    });
+
+    res.status(201).json({
+      id: result.insertId,
+      judul,
+      kategori_id,
+      isi,
+      user_id,
+      status: finalStatus,
+      foto,
+      message: 'Post berhasil ditambahkan',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updatePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { judul, kategori_id, isi, user_id, status } = req.body;
+    const foto = req.file ? req.file.filename : null;
+
+    const results = await postService.getPostById(id);
     if (!results.length)
       return res.status(404).json({ error: 'Post tidak ditemukan' });
 
     const oldFoto = results[0].foto;
-    const fotoToSave = newFoto || oldFoto;
+    const fotoToSave = foto || oldFoto;
     const finalStatus = (status || 'draft').toLowerCase();
 
-    // Jika ada foto baru, hapus foto lama
-    if (newFoto && oldFoto) {
-      const oldPath = path.join(__dirname, '../uploads/berita', oldFoto);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-    }
+    await postService.updatePost(id, {
+      judul,
+      kategori_id,
+      isi,
+      user_id,
+      status: finalStatus,
+      foto: fotoToSave,
+    });
 
-    const sql = `
-      UPDATE posts 
-      SET judul=?, kategori_id=?, isi=?, user_id=?, status=?, foto=?, updated_at=NOW()
-      WHERE id=?
-    `;
-    db.query(
-      sql,
-      [judul, kategori_id, isi, user_id, finalStatus, fotoToSave, id],
-      (err2) => {
-        if (err2) return res.status(500).json({ error: err2.message });
-        res.json({ message: 'Post berhasil diperbarui' });
-      }
-    );
-  });
+    res.json({ message: 'Post berhasil diperbarui' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ✅ Hapus post
-exports.deletePost = (req, res) => {
-  const id = req.params.id;
-
-  db.query('SELECT foto FROM posts WHERE id = ?', [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!results.length)
+exports.deletePost = async (req, res) => {
+  try {
+    const result = await postService.deletePost(req.params.id);
+    if (result?.notFound)
       return res.status(404).json({ error: 'Post tidak ditemukan' });
 
-    const foto = results[0].foto;
-    if (foto) {
-      const fotoPath = path.join(__dirname, '../uploads/berita', foto);
-      if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
-    }
-
-    db.query('DELETE FROM posts WHERE id = ?', [id], (err2) => {
-      if (err2) return res.status(500).json({ error: err2.message });
-      res.json({ message: 'Post berhasil dihapus' });
-    });
-  });
+    res.json({ message: 'Post berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ✅ Hitung total post "publish"
-exports.getPostsCount = (req, res) => {
-  db.query(
-    `SELECT COUNT(*) AS total FROM posts WHERE LOWER(status) IN ('publish', 'published')`,
-    (err, results) => {
-      if (err) {
-        console.error('SQL Error:', err);
-        return res.status(500).json({ error: err.message });
-      }
-      res.json({ total: results[0].total });
-    }
-  );
+// ✅ Hitung total semua post published
+exports.getPostsCount = async (req, res) => {
+  try {
+    const count = await postService.getPostsCount();
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ✅ Hitung jumlah berita milik user tertentu (PDD)
-exports.getPostCountByUser = (req, res) => {
-  const { user_id } = req.params;
-  if (!user_id) return res.status(400).json({ message: "user_id wajib diisi" });
+// ✅ Hitung total post per user
+exports.getPostCountByUser = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const count = await postService.getPostCountByUser(user_id);
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
-  const sql = `SELECT COUNT(*) AS total FROM posts WHERE user_id = ?`;
-  db.query(sql, [user_id], (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json({ total: result[0].total });
-  });
+// ✅ Ambil semua post milik user tertentu
+exports.getPostsByUser = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    if (!user_id)
+      return res.status(400).json({ error: 'user_id wajib diisi' });
+
+    const posts = await postService.getPostsByUser(user_id);
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };

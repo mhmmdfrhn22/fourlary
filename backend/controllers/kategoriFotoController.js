@@ -1,47 +1,72 @@
-const db = require('../config/db');
+const kategoriFotoService = require("../services/kategoriFotoService");
 
-// GET semua kategori
+// ✅ Ambil semua kategori
 exports.getAllKategori = (req, res) => {
-  db.query('SELECT * FROM kategori_foto ORDER BY tanggal_dibuat DESC', (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json(result);
+  kategoriFotoService.getAllKategori((err, results) => {
+    if (err) return res.status(500).json({ message: "Gagal mengambil data kategori", error: err });
+    res.json(results);
   });
 };
 
-// GET kategori by ID
+// ✅ Ambil kategori berdasarkan ID
 exports.getKategoriById = (req, res) => {
   const { id } = req.params;
-  db.query('SELECT * FROM kategori_foto WHERE id_kategori = ?', [id], (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (result.length === 0) return res.status(404).json({ message: 'Kategori tidak ditemukan' });
-    res.json(result[0]);
+
+  kategoriFotoService.getKategoriById(id, (err, results) => {
+    if (err) return res.status(500).json({ message: "Gagal mengambil kategori", error: err });
+    if (results.length === 0) return res.status(404).json({ message: "Kategori tidak ditemukan" });
+    res.json(results[0]);
   });
 };
 
-// CREATE kategori baru
+// ✅ Tambah kategori baru
 exports.createKategori = (req, res) => {
   const { nama_kategori, dibuat_oleh } = req.body;
-  db.query('INSERT INTO kategori_foto (nama_kategori, dibuat_oleh) VALUES (?, ?)', [nama_kategori, dibuat_oleh], (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.status(201).json({ message: 'Kategori berhasil dibuat', id: result.insertId });
+
+  // Hanya nama_kategori yang wajib
+  if (!nama_kategori) {
+    return res.status(400).json({ message: "Nama kategori harus diisi" });
+  }
+
+  // Kalau tidak ada dibuat_oleh, isi NULL
+  const dibuatOlehValue = dibuat_oleh || null;
+
+  kategoriFotoService.createKategori(nama_kategori, dibuatOlehValue, (err, result) => {
+    if (err) {
+      console.error("❌ Gagal membuat kategori:", err);
+      return res.status(500).json({ message: "Gagal membuat kategori", error: err });
+    }
+
+    res.status(201).json({
+      message: "Kategori berhasil dibuat",
+      id: result.insertId,
+      nama_kategori,
+      dibuat_oleh: dibuatOlehValue,
+    });
   });
 };
 
-// UPDATE kategori
+// ✅ Update kategori
 exports.updateKategori = (req, res) => {
   const { id } = req.params;
   const { nama_kategori } = req.body;
-  db.query('UPDATE kategori_foto SET nama_kategori = ? WHERE id_kategori = ?', [nama_kategori, id], (err) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json({ message: 'Kategori berhasil diperbarui' });
+
+  if (!nama_kategori) {
+    return res.status(400).json({ message: "Nama kategori harus diisi" });
+  }
+
+  kategoriFotoService.updateKategori(id, nama_kategori, (err) => {
+    if (err) return res.status(500).json({ message: "Gagal memperbarui kategori", error: err });
+    res.json({ message: "Kategori berhasil diperbarui" });
   });
 };
 
-// DELETE kategori
+// ✅ Hapus kategori
 exports.deleteKategori = (req, res) => {
   const { id } = req.params;
-  db.query('DELETE FROM kategori_foto WHERE id_kategori = ?', [id], (err) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json({ message: 'Kategori berhasil dihapus' });
+
+  kategoriFotoService.deleteKategori(id, (err) => {
+    if (err) return res.status(500).json({ message: "Gagal menghapus kategori", error: err });
+    res.json({ message: "Kategori berhasil dihapus" });
   });
 };
