@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const fs = require("fs");
 const path = require("path");
+const cloudinary = require("../config/cloudinary");
 
 const uploadDir = path.join(__dirname, "../uploads/pembinat");
 
@@ -16,7 +17,6 @@ exports.getAllPembinat = async () => {
       orderBy: { created_at: "desc" },
     });
 
-    // Bentuk data mirip seperti SQL JOIN versi lama
     return pembinat.map((p) => ({
       ...p,
       nama_jurusan: p.jurusan ? p.jurusan.nama_jurusan : null,
@@ -48,7 +48,7 @@ exports.createPembinat = async (data) => {
   }
 };
 
-// 🔹 UPDATE pembinat
+// 🔹 UPDATE pembinat (hapus gambar lama Cloudinary jika diganti)
 exports.updatePembinat = async (id, data) => {
   const { nama_pekerjaan, deskripsi, id_jurusan, id_pembimbing, gambarBaru } = data;
 
@@ -59,18 +59,36 @@ exports.updatePembinat = async (id, data) => {
 
     if (!existing) return null;
 
-    // hapus gambar lama jika ada gambar baru
+    // 🔸 Hapus gambar lama (Cloudinary atau lokal)
     if (gambarBaru && existing.gambar_pekerjaan) {
-      const oldPath = path.join(uploadDir, existing.gambar_pekerjaan);
-      if (fs.existsSync(oldPath)) {
+      const oldUrl = existing.gambar_pekerjaan;
+
+      // Jika URL Cloudinary, hapus lewat API
+      if (oldUrl.startsWith("http")) {
         try {
-          fs.unlinkSync(oldPath);
+          const publicId = oldUrl
+            .split("/")
+            .slice(-2)
+            .join("/")
+            .replace(/\.[^.]+$/, ""); // ambil path 'uploads/pembinat/xxxxxx' tanpa ekstensi
+          await cloudinary.uploader.destroy(publicId);
         } catch (e) {
-          console.warn("⚠️ Gagal hapus gambar lama:", e);
+          console.warn("⚠️ Gagal hapus gambar lama di Cloudinary:", e.message);
+        }
+      } else {
+        // Kalau masih file lokal
+        const oldPath = path.join(uploadDir, oldUrl);
+        if (fs.existsSync(oldPath)) {
+          try {
+            fs.unlinkSync(oldPath);
+          } catch (e) {
+            console.warn("⚠️ Gagal hapus file lokal:", e);
+          }
         }
       }
     }
 
+    // 🔸 Update data
     await prisma.pembinatPekerjaan.update({
       where: { id_pekerjaan: Number(id) },
       data: {
@@ -96,21 +114,37 @@ exports.deletePembinat = async (id) => {
     });
     if (!existing) return null;
 
-    await prisma.pembinatPekerjaan.delete({
-      where: { id_pekerjaan: Number(id) },
-    });
-
-    // hapus file gambar jika ada
+    // Hapus gambar jika ada
     if (existing.gambar_pekerjaan) {
-      const filePath = path.join(uploadDir, existing.gambar_pekerjaan);
-      if (fs.existsSync(filePath)) {
+      const oldUrl = existing.gambar_pekerjaan;
+
+      if (oldUrl.startsWith("http")) {
         try {
-          fs.unlinkSync(filePath);
+          const publicId = oldUrl
+            .split("/")
+            .slice(-2)
+            .join("/")
+            .replace(/\.[^.]+$/, "");
+          await cloudinary.uploader.destroy(publicId);
         } catch (e) {
-          console.warn("⚠️ Gagal hapus file:", e);
+          console.warn("⚠️ Gagal hapus gambar di Cloudinary:", e.message);
+        }
+      } else {
+        const filePath = path.join(uploadDir, oldUrl);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+          } catch (e) {
+            console.warn("⚠️ Gagal hapus file lokal:", e);
+          }
         }
       }
     }
+
+    // Hapus data dari DB
+    await prisma.pembinatPekerjaan.delete({
+      where: { id_pekerjaan: Number(id) },
+    });
 
     return true;
   } catch (err) {

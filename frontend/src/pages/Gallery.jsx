@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,34 +25,30 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { Heart, Share2 } from "lucide-react";
 
 export default function Gallery() {
   const API_URL = "http://localhost:3000/api/foto";
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const userId = user?.id_user ?? user?.id ?? null;
 
   const [images, setImages] = useState([]);
   const [categories, setCategories] = useState(["Semua"]);
   const [loading, setLoading] = useState(true);
-
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Semua");
-
-  const itemsPerPage = 9;
   const [currentPage, setCurrentPage] = useState(1);
-
   const [openModal, setOpenModal] = useState(false);
   const [selectedFotoId, setSelectedFotoId] = useState(null);
-
   const [detail, setDetail] = useState(null);
   const [komentarList, setKomentarList] = useState([]);
   const [newKomentar, setNewKomentar] = useState("");
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [detailLoading, setDetailLoading] = useState(false);
-
   const [openLoginAlert, setOpenLoginAlert] = useState(false);
+  const [cardLoadingId, setCardLoadingId] = useState(null);
+
+  const itemsPerPage = 9;
 
   useEffect(() => {
     fetchGallery();
@@ -64,12 +63,11 @@ export default function Gallery() {
 
       const formatted = (Array.isArray(data) ? data : []).map((it) => ({
         id: it.id_foto,
-        src: `http://localhost:3000/uploads/galeri/${it.url_foto}`,
+        src: it.url_foto,
         title: it.deskripsi || "Tanpa Deskripsi",
         uploader: it.uploader || "Admin",
         category: it.nama_kategori || "Tanpa Kategori",
         likes: it.like_count || 0,
-        tanggal_upload: it.tanggal_upload || null,
       }));
 
       const uniqueCategories = [
@@ -114,9 +112,11 @@ export default function Gallery() {
   };
 
   const openDetailModal = async (fotoId) => {
+    setCardLoadingId(fotoId);
     setSelectedFotoId(fotoId);
     setOpenModal(true);
     await loadDetail(fotoId);
+    setCardLoadingId(null);
   };
 
   const loadDetail = async (fotoId) => {
@@ -139,11 +139,10 @@ export default function Gallery() {
 
       setDetail({
         id: fotoRes.id_foto,
-        src: `http://localhost:3000/uploads/galeri/${fotoRes.url_foto}`,
+        src: fotoRes.url_foto,
         title: fotoRes.deskripsi || "Tanpa Deskripsi",
         uploader: fotoRes.uploader || "Admin",
         category: fotoRes.nama_kategori || "Tanpa Kategori",
-        tanggal_upload: fotoRes.tanggal_upload || null,
       });
 
       setKomentarList(komentarRes);
@@ -198,6 +197,7 @@ export default function Gallery() {
     }
 
     if (!newKomentar.trim() || !selectedFotoId) return;
+
     const body = {
       id_foto: selectedFotoId,
       id_user: userId,
@@ -223,8 +223,32 @@ export default function Gallery() {
     }
   };
 
+  // --- 🔥 ANIMASI VARIANTS ---
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    show: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
+    exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } },
+  };
+
   return (
-    <div className="container mx-auto px-6 sm:px-10 lg:px-24 py-10">
+    <motion.div
+      className="container mx-auto px-6 sm:px-10 lg:px-24 py-10"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">
@@ -263,51 +287,70 @@ export default function Gallery() {
         </div>
       </div>
 
-      {/* Gallery Grid */}
-      {currentImages.length === 0 ? (
-        <p className="text-center text-gray-500">
-          Tidak ada foto ditemukan.
-        </p>
+      {/* Gallery */}
+      {loading ? (
+        <p className="text-center text-gray-500">Memuat galeri...</p>
+      ) : currentImages.length === 0 ? (
+        <p className="text-center text-gray-500">Tidak ada foto ditemukan.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {currentImages.map((img) => (
-            <Card
-              key={img.id}
-              onClick={() => openDetailModal(img.id)}
-              className="p-0 relative overflow-hidden cursor-pointer group transition-transform duration-300 hover:scale-[102%]"
-            >
-              <CardHeader className="p-0">
-                <img
-                  src={img.src}
-                  alt={img.title}
-                  className="w-full h-64 object-cover"
-                />
-              </CardHeader>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-between p-4 pointer-events-none">
-                <div className="flex justify-end pointer-events-auto">
-                  <Badge className="bg-white text-gray-800 font-semibold shadow-sm px-3 py-1 rounded-full">
-                    {img.category}
-                  </Badge>
-                </div>
-                <div className="flex justify-between text-white items-end pointer-events-auto">
-                  <div>
-                    <h2 className="text-lg font-bold">{img.title}</h2>
-                    <p className="text-sm mt-1">
-                      Diunggah oleh{" "}
-                      <span className="font-semibold">{img.uploader}</span>
-                    </p>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
+          <AnimatePresence mode="popLayout">
+            {currentImages.map((img) => (
+              <motion.div
+                key={img.id}
+                variants={cardVariants}
+                exit="exit"
+                layout
+              >
+                <Card
+                  onClick={() => openDetailModal(img.id)}
+                  className="p-0 relative overflow-hidden cursor-pointer group transition-transform duration-300 hover:scale-[102%]"
+                >
+                  <CardHeader className="p-0 relative">
+                    <img
+                      src={img.src}
+                      alt={img.title}
+                      className="w-full h-64 object-cover transition-all duration-500 group-hover:scale-105"
+                    />
+                    {cardLoadingId === img.id && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-white"></div>
+                      </div>
+                    )}
+                  </CardHeader>
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-between p-4 pointer-events-none">
+                    <div className="flex justify-end pointer-events-auto">
+                      <Badge className="bg-white text-gray-800 font-semibold shadow-sm px-3 py-1 rounded-full">
+                        {img.category}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between text-white items-end pointer-events-auto">
+                      <div>
+                        <h2 className="text-lg font-bold">{img.title}</h2>
+                        <p className="text-sm mt-1">
+                          Diunggah oleh{" "}
+                          <span className="font-semibold">{img.uploader}</span>
+                        </p>
+                      </div>
+                      <Badge className="bg-white text-gray-800 font-medium shadow-sm px-4 py-1 rounded-full">
+                        ❤️ {img.likes}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge className="bg-white text-gray-800 font-medium shadow-sm px-4 py-1 rounded-full">
-                    ❤️ {img.likes}
-                  </Badge>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
 
-      {/* Modal with Details */}
+      {/* Modal Detail */}
       <GalleryDetailModal
         openModal={openModal}
         closeModal={closeModal}
@@ -324,7 +367,12 @@ export default function Gallery() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-10 flex justify-center items-center gap-2">
+        <motion.div
+          className="mt-10 flex justify-center items-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
           <Button
             variant="outline"
             size="sm"
@@ -351,10 +399,10 @@ export default function Gallery() {
           >
             Selanjutnya &gt;
           </Button>
-        </div>
+        </motion.div>
       )}
 
-      {/* Login Alert Dialog */}
+      {/* Alert login */}
       <AlertDialog open={openLoginAlert} onOpenChange={setOpenLoginAlert}>
         <AlertDialogContent className="max-w-sm rounded-2xl">
           <AlertDialogHeader>
@@ -366,7 +414,6 @@ export default function Gallery() {
               <strong>like</strong> atau menulis <strong>komentar</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
-
           <AlertDialogFooter className="flex justify-center gap-3 mt-6">
             <AlertDialogCancel
               className="rounded-full px-6 bg-gray-200 hover:bg-gray-300 transition"
@@ -386,6 +433,6 @@ export default function Gallery() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </motion.div>
   );
 }

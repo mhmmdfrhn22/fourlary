@@ -26,27 +26,52 @@ exports.getLikeCountByUser = async (user_id) => {
 
 // ==============================
 // Statistik like berdasarkan tanggal (interval dalam hari)
-// ==============================
 exports.getLikeStats = async (userId, interval) => {
-  // Ambil semua like di foto yang diupload oleh user dalam rentang waktu tertentu
-  const since = new Date();
-  since.setDate(since.getDate() - interval);
+  const days = Number(interval.replace("d", "")) || 7;
 
-  const likes = await prisma.likeFoto.groupBy({
-    by: ["tanggal_like"],
-    _count: { id_like: true },
-    where: {
-      foto: { diupload_oleh: Number(userId) },
-      tanggal_like: { gte: since },
-    },
-    orderBy: { tanggal_like: "asc" },
+  // Ambil data like dari DB
+  const rows = await prisma.$queryRaw`
+    SELECT 
+      DATE(lf.tanggal_like) AS date,
+      COUNT(*) AS total
+    FROM LikeFoto lf
+    JOIN FotoGaleri fg ON fg.id_foto = lf.id_foto
+    WHERE fg.diupload_oleh = ${Number(userId)}
+      AND lf.tanggal_like >= DATE_SUB(CURDATE(), INTERVAL ${days - 1} DAY)
+    GROUP BY DATE(lf.tanggal_like)
+    ORDER BY date ASC;
+  `;
+
+  // Map cepat: { "2025-11-11": 2, "2025-11-12": 3 }
+  const likeMap = {};
+  rows.forEach(r => {
+    const key = r.date.toISOString().split("T")[0];
+    likeMap[key] = Number(r.total);
   });
 
-  return likes.map((l) => ({
-    date: l.tanggal_like.toISOString().split("T")[0],
-    total: l._count.id_like,
-  }));
+  // Generate range tanggal lengkap
+  const result = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(today.getDate() - (days - 1));
+
+  let current = new Date(start);
+
+  while (current <= today) {
+    const key = current.toISOString().split("T")[0];
+    result.push({
+      date: key,
+      total: likeMap[key] || 0, // isi 0 kalau tidak ada like
+    });
+    current.setDate(current.getDate() + 1);
+  }
+
+  return result;
 };
+
 
 // ==============================
 // Cek apakah user sudah like foto tertentu

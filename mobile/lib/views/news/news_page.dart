@@ -23,31 +23,31 @@ class _NewsPageState extends State<NewsPage> {
 
   final List<Map<String, dynamic>> newsList = [
     {
-      'image': 'https://picsum.photos/200/120?1',
-      'title': 'What Training Do Volleyball Players Need?',
-      'author': 'McKindney',
-      'date': 'Feb 27, 2023',
-      'category': 'Sport',
+      'image': 'assets/images/gambar1.JPG',
+      'title': 'Pemenang Kejuaraan Lomba Teknologi Nasional',
+      'author': 'Desain Media Visual',
+      'date': 'Feb 27, 2025',
+      'category': 'Prestasi',
       'content':
           'Volleyball players require strength, agility, and endurance training to perform their best. This includes plyometrics, cardio, and flexibility workouts...',
     },
     {
-      'image': 'https://picsum.photos/200/120?2',
-      'title': 'Secondary school places: When do parents find out?',
-      'author': 'Rosemary',
-      'date': 'Feb 28, 2023',
-      'category': 'Education',
+      'image': 'assets/images/gambar2.JPG',
+      'title': 'Kira Kira Kapan Diadakannya Acara Transforkrab Selanjutnya?',
+      'author': 'PDD OSIS',
+      'date': 'Feb 28, 2025',
+      'category': 'Acara',
       'content':
           'Parents usually find out about secondary school placements in March. The process varies by country and local education authority...',
     },
     {
-      'image': 'https://picsum.photos/200/120?3',
-      'title': '6 Houses Destroyed In Massive Fire In Assam\'s K.',
-      'author': 'Aslam K.',
-      'date': 'Mar 02, 2023',
-      'category': 'World',
+      'image': 'assets/images/gambar3.JPG',
+      'title': 'Praktek Memukau Dari Jurusan Teknik Pengelasan',
+      'author': 'Desain Media Visual',
+      'date': 'Feb 27, 2025',
+      'category': 'Kegiatan',
       'content':
-          'A massive fire broke out in a residential area of Assam, destroying six houses. Firefighters managed to control the blaze after two hours...',
+          'Volleyball players require strength, agility, and endurance training to perform their best. This includes plyometrics, cardio, and flexibility workouts...',
     },
   ];
 
@@ -74,7 +74,10 @@ class _NewsPageState extends State<NewsPage> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: Colors.grey.shade200),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 child: Row(
                   children: [
                     const Icon(Iconsax.search_normal, color: Colors.grey),
@@ -169,7 +172,7 @@ class _NewsPageState extends State<NewsPage> {
                                 topLeft: Radius.circular(20),
                                 bottomLeft: Radius.circular(20),
                               ),
-                              child: Image.network(
+                              child: Image.asset(
                                 news['image'],
                                 width: 110,
                                 height: 100,

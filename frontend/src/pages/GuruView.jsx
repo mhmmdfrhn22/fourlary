@@ -18,7 +18,20 @@ export default function GuruView() {
         const res = await fetch('http://localhost:3000/api/guru')
         if (!res.ok) throw new Error('Gagal mengambil data guru')
         const data = await res.json()
-        setGuruData(data)
+
+        // Normalisasi agar struktur datanya konsisten
+        const mapped = Array.isArray(data)
+          ? data.map((g) => ({
+              id: g.id,
+              nama: g.nama_guru || g.nama,
+              mapel: g.mata_pelajaran || g.mapel,
+              deskripsi: g.deskripsi || '',
+              sosmed: g.link_sosial_media || g.sosmed || '',
+              foto: g.foto_guru || g.foto || '',
+            }))
+          : []
+
+        setGuruData(mapped)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -34,10 +47,15 @@ export default function GuruView() {
     return guruData.slice(start, start + pageSize)
   }, [currentPage, guruData])
 
-  const safeSrc = (path) =>
-    typeof path === 'string' && path.trim() !== ''
-      ? `http://localhost:3000/uploads/guru/${path}`
-      : 'http://localhost:3000/uploads/guru/placeholder-guru.png'
+  // ✅ Fix: kalau foto Cloudinary langsung pakai URL aslinya
+  const safeSrc = (path) => {
+    if (!path || path.trim() === '') {
+      return 'http://localhost:3000/uploads/guru/placeholder-guru.png'
+    }
+    return path.startsWith('http')
+      ? path
+      : `http://localhost:3000/uploads/guru/${path}`
+  }
 
   if (loading)
     return <p className="text-gray-500 text-center py-10">Memuat data guru...</p>
@@ -69,14 +87,14 @@ export default function GuruView() {
             <CardContent className="p-5 flex flex-col items-center text-center">
               <div className="w-full h-[220px] rounded-xl overflow-hidden bg-gray-50">
                 <img
-                  src={safeSrc(guru.foto_guru)}
-                  alt={guru.nama_guru}
+                  src={safeSrc(guru.foto)}
+                  alt={guru.nama}
                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                 />
               </div>
 
               <h3 className="font-semibold text-[15px] mt-4 flex items-center gap-1 justify-center text-gray-800">
-                <span>{guru.nama_guru}</span>
+                <span>{guru.nama}</span>
                 <CheckCircle2 className="w-4 h-4 text-blue-500" />
               </h3>
 
@@ -84,9 +102,9 @@ export default function GuruView() {
                 {guru.deskripsi || 'Tidak ada deskripsi.'}
               </p>
 
-              {guru.link_sosial_media && (
+              {guru.sosmed && (
                 <a
-                  href={guru.link_sosial_media}
+                  href={guru.sosmed}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 w-full"

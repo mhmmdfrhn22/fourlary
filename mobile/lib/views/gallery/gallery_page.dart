@@ -14,7 +14,7 @@ class _GalleryPageState extends State<GalleryPage> {
     {
       'username': 'Nymas Hayu',
       'profile': 'https://i.pravatar.cc/150?img=5',
-      'image': 'https://picsum.photos/400/300?1',
+      'image': 'assets/images/gambar4.JPG',
       'likes': 1242,
       'comments': 24,
       'isLiked': false,
@@ -147,7 +147,7 @@ class _GalleryPageState extends State<GalleryPage> {
                         tag: post['image'],
                         child: AspectRatio(
                           aspectRatio: 1,
-                          child: Image.network(
+                          child: Image.asset(
                             post['image'],
                             fit: BoxFit.cover,
                             width: double.infinity,

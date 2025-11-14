@@ -2,82 +2,97 @@
 const likeService = require("../services/likeFotoService");
 
 // ✅ Jumlah like per foto
-exports.getLikeCount = (req, res) => {
-  const { id_foto } = req.params;
-
-  likeService.getLikeCount(id_foto, (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json(result[0]);
-  });
+exports.getLikeCount = async (req, res) => {
+  try {
+    const { id_foto } = req.params;
+    const result = await likeService.getLikeCount(id_foto);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ✅ Total like dari semua foto milik user
-exports.getLikeCountByUser = (req, res) => {
-  const { user_id } = req.params;
-  if (!user_id)
-    return res.status(400).json({ message: "user_id wajib diisi" });
+exports.getLikeCountByUser = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    if (!user_id)
+      return res.status(400).json({ message: "user_id wajib diisi" });
 
-  likeService.getLikeCountByUser(user_id, (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    const total = result.length ? result[0].total : 0;
-    res.json({ total });
-  });
+    const result = await likeService.getLikeCountByUser(user_id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ✅ Statistik like berdasarkan waktu
-exports.getLikeStats = (req, res) => {
-  const { userId } = req.params;
-  let { range } = req.query;
-  if (!range) range = "7d";
+exports.getLikeStats = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let { range } = req.query;
 
-  let interval = 7;
-  if (range === "14d") interval = 14;
-  else if (range === "30d") interval = 30;
+    // default 7d
+    if (!range) range = "7d";
 
-  likeService.getLikeStats(userId, interval, (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
+    // langsung kirim string ke service
+    const result = await likeService.getLikeStats(userId, range);
+
     res.json(result);
-  });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ✅ Cek apakah user sudah like foto
-exports.checkUserLike = (req, res) => {
-  const { id_foto, id_user } = req.params;
-
-  likeService.checkUserLike(id_foto, id_user, (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json({ liked: result.length > 0 });
-  });
+exports.checkUserLike = async (req, res) => {
+  try {
+    const { id_foto, id_user } = req.params;
+    const liked = await likeService.checkUserLike(id_foto, id_user);
+    res.json({ liked });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ✅ Tambah like
-exports.addLike = (req, res) => {
-  const { id_foto, id_user } = req.body;
-  if (!id_foto || !id_user)
-    return res.status(400).json({ message: "id_foto dan id_user wajib diisi" });
+exports.addLike = async (req, res) => {
+  try {
+    const { id_foto, id_user } = req.body;
+    if (!id_foto || !id_user)
+      return res.status(400).json({ message: "id_foto dan id_user wajib diisi" });
 
-  likeService.addLike(id_foto, id_user, (err) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.status(201).json({ message: "Foto disukai" });
-  });
+    const result = await likeService.addLike(id_foto, id_user);
+    if (!result.success)
+      return res.status(400).json({ message: result.message });
+
+    res.status(201).json({ message: "Foto disukai", data: result.like });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ✅ Hapus like
-exports.removeLike = (req, res) => {
-  const { id_foto, id_user } = req.body;
+exports.removeLike = async (req, res) => {
+  try {
+    const { id_foto, id_user } = req.body;
+    if (!id_foto || !id_user)
+      return res.status(400).json({ message: "id_foto dan id_user wajib diisi" });
 
-  likeService.removeLike(id_foto, id_user, (err) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json({ message: "Like dihapus" });
-  });
+    const result = await likeService.removeLike(id_foto, id_user);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// ✅ Cek like (pakai query)
-exports.checkLike = (req, res) => {
-  const { id_foto, id_user } = req.query;
-
-  likeService.checkLike(id_foto, id_user, (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json({ liked: result.length > 0 });
-  });
+// ✅ Alias cek like (pakai query)
+exports.checkLike = async (req, res) => {
+  try {
+    const { id_foto, id_user } = req.query;
+    const liked = await likeService.checkLike(id_foto, id_user);
+    res.json({ liked });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };

@@ -35,6 +35,19 @@ export default function BeritaView() {
     fetchBerita()
   }, [])
 
+  const safeSrc = (fotoPath) => {
+    if (!fotoPath) {
+      return "https://res.cloudinary.com/dprywyfwm/image/upload/v1762822108/uploads/placeholder-berita.png";
+    }
+
+    if (fotoPath.startsWith("https://res.cloudinary.com")) {
+      return fotoPath;
+    }
+
+    // fallback kalau backend cuma kirim nama file
+    return `https://res.cloudinary.com/dprywyfwm/image/upload/v1762826959/uploads/berita/${fotoPath}`;
+  };
+
   const filteredBerita = useMemo(() => {
     return beritaData.filter((b) => {
       const cocokSearch =
@@ -51,11 +64,6 @@ export default function BeritaView() {
     const start = (currentPage - 1) * pageSize
     return filteredBerita.slice(start, start + pageSize)
   }, [currentPage, filteredBerita])
-
-  const safeSrc = (path) =>
-    path
-      ? `http://localhost:3000/uploads/berita/${path}`
-      : "http://localhost:3000/uploads/placeholder-berita.png"
 
   const kategoriList = useMemo(() => {
     const all = beritaData.map((b) => b.kategori).filter(Boolean)
@@ -103,10 +111,15 @@ export default function BeritaView() {
               <CardContent className="p-5 flex flex-col text-left">
                 <div className="relative w-full h-[250px] rounded-xl overflow-hidden bg-gray-100">
                   <img
-                    src={safeSrc(berita.foto)}
+                    src={
+                      berita.url_foto
+                        ? berita.url_foto
+                        : safeSrc(berita.foto)
+                    }
                     alt={berita.judul}
                     className="w-full h-full object-cover"
                   />
+
                   <span className="absolute top-3 left-3 bg-white/90 backdrop-blur text-gray-800 text-xs font-semibold px-3 py-1 rounded-full shadow-sm border border-gray-200">
                     {berita.kategori || "Umum"}
                   </span>

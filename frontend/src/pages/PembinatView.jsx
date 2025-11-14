@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -18,7 +17,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 
 export default function PembinatView() {
   const [data, setData] = useState([]);
@@ -26,6 +25,8 @@ export default function PembinatView() {
   const [jurusanFilter, setJurusanFilter] = useState("Semua");
   const [selectedItem, setSelectedItem] = useState(null);
   const [pembimbing, setPembimbing] = useState(null);
+  const [loadingPembimbing, setLoadingPembimbing] = useState(false);
+  const [loadingCard, setLoadingCard] = useState(false); // ⬅️ tambahan loading klik card
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
 
@@ -42,7 +43,7 @@ export default function PembinatView() {
     fetchData();
   }, []);
 
-  // ketika selectedItem berubah, fetch pembimbing detail jika ada id_pembimbing
+  // Ambil data pembimbing saat dialog terbuka
   useEffect(() => {
     if (!selectedItem) {
       setPembimbing(null);
@@ -53,7 +54,9 @@ export default function PembinatView() {
       setPembimbing(null);
       return;
     }
+
     let mounted = true;
+    setLoadingPembimbing(true);
     fetch(`http://localhost:3000/api/pembimbing/${idPembimbing}`)
       .then((r) => {
         if (!r.ok) throw new Error("Gagal memuat pembimbing");
@@ -65,7 +68,11 @@ export default function PembinatView() {
       .catch((err) => {
         console.warn("fetch pembimbing error:", err);
         if (mounted) setPembimbing(null);
+      })
+      .finally(() => {
+        if (mounted) setLoadingPembimbing(false);
       });
+
     return () => (mounted = false);
   }, [selectedItem]);
 
@@ -88,23 +95,50 @@ export default function PembinatView() {
     return filtered.slice(start, start + pageSize);
   }, [currentPage, filtered]);
 
-  const safeSrc = (path) =>
-    path
-      ? `http://localhost:3000/uploads/pembinat/${path}`
-      : "http://localhost:3000/uploads/placeholder.png";
+  const safeSrc = (path) => {
+    if (!path)
+      return "https://res.cloudinary.com/dprywyfwm/image/upload/vdefault/placeholder.png";
+    if (path.startsWith("http")) return path;
+    return `https://res.cloudinary.com/dprywyfwm/image/upload/${path}`;
+  };
 
-  const safePembimbingImg = (path) =>
-    path
-      ? `http://localhost:3000/uploads/pembimbing/${path}`
-      : "http://localhost:3000/uploads/default-user.png";
+  const safePembimbingImg = (path) => {
+    if (!path)
+      return "https://res.cloudinary.com/dprywyfwm/image/upload/vdefault/default-user.png";
+    if (path.startsWith("http")) return path;
+    return `https://res.cloudinary.com/dprywyfwm/image/upload/${path}`;
+  };
 
   const jurusanList = useMemo(() => {
     const all = data.map((d) => d.nama_jurusan).filter(Boolean);
     return ["Semua", ...new Set(all)];
   }, [data]);
 
+  const handleCardClick = async (item) => {
+    try {
+      setLoadingCard(true); // mulai loading
+      await new Promise((r) => setTimeout(r, 400)); // efek delay biar smooth
+      setSelectedItem(item);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setLoadingCard(false); // selesai loading
+    }
+  };
+
   return (
-    <div className="container mx-auto px-6 sm:px-10 lg:px-24 py-10">
+    <div className="container mx-auto px-6 sm:px-10 lg:px-24 py-10 relative">
+      {/* Overlay loading klik card */}
+      {loadingCard && (
+        <div className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center">
+          <div className="bg-white p-4 rounded-xl shadow-md flex items-center gap-3">
+            <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+            <span className="text-gray-700 font-medium">
+              Membuka detail...
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
@@ -140,10 +174,7 @@ export default function PembinatView() {
             <Card
               key={item.id_pekerjaan}
               className="p-0 rounded-2xl border border-gray-100 hover:shadow-lg transition-all bg-white cursor-pointer"
-              onClick={() => {
-                setSelectedItem(item);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
+              onClick={() => handleCardClick(item)}
             >
               <CardContent className="p-5 flex flex-col text-left">
                 <div className="relative w-full h-[250px] rounded-xl overflow-hidden bg-gray-100">
@@ -172,7 +203,9 @@ export default function PembinatView() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500 text-center py-10">Tidak ada pembinat ditemukan.</p>
+        <p className="text-gray-500 text-center py-10">
+          Tidak ada pembinat ditemukan.
+        </p>
       )}
 
       {/* Pagination */}
@@ -213,25 +246,12 @@ export default function PembinatView() {
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         {selectedItem && (
           <DialogContent className="max-w-2xl bg-white rounded-2xl p-0 overflow-hidden">
-            {/* Header */}
             <div className="p-6 sm:p-8 max-h-[85vh] overflow-y-auto">
               <div className="flex items-start justify-between mb-4">
                 <DialogTitle className="text-2xl font-bold text-gray-900">
                   {selectedItem.nama_pekerjaan}
                 </DialogTitle>
-                {/* Single close button top-right */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedItem(null)}
-                  className="ml-4"
-                  title="Tutup"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </Button>
               </div>
-
-              {/* Gambar */}
               <div className="w-full h-[250px] rounded-xl overflow-hidden mb-5">
                 <img
                   src={safeSrc(selectedItem.gambar_pekerjaan)}
@@ -240,16 +260,21 @@ export default function PembinatView() {
                 />
               </div>
 
-              {/* Deskripsi */}
               <DialogDescription className="text-gray-600 text-[15px] leading-relaxed mb-6">
                 {selectedItem.deskripsi}
               </DialogDescription>
 
-              {/* Pembimbing */}
               <div className="border-t border-gray-200 pt-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Pembimbing</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  Pembimbing
+                </h3>
 
-                {pembimbing ? (
+                {loadingPembimbing ? (
+                  <div className="flex items-center justify-center py-4 text-gray-500">
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Memuat data pembimbing...
+                  </div>
+                ) : pembimbing ? (
                   <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4">
                     <img
                       src={safePembimbingImg(pembimbing.foto_pembimbing)}
@@ -257,21 +282,32 @@ export default function PembinatView() {
                       className="w-14 h-14 rounded-full object-cover border border-gray-200"
                     />
                     <div className="flex-1">
-                      <p className="text-base font-medium text-gray-900">{pembimbing.nama}</p>
-                      <p className="text-sm text-gray-500">{pembimbing.jabatan || "Guru Pembimbing"}</p>
-                      {pembimbing.deskripsi && <p className="text-xs text-gray-500 mt-1">{pembimbing.deskripsi}</p>}
+                      <p className="text-base font-medium text-gray-900">
+                        {pembimbing.nama}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {pembimbing.jabatan || "Guru Pembimbing"}
+                      </p>
+                      {pembimbing.deskripsi && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {pembimbing.deskripsi}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">Data pembimbing belum tersedia.</p>
+                  <p className="text-sm text-gray-500 italic">
+                    Data pembimbing belum tersedia.
+                  </p>
                 )}
               </div>
 
-              {/* Jurusan + WA */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-6">
                 <p className="text-sm text-gray-500">
                   Jurusan:{" "}
-                  <span className="font-medium text-gray-800">{selectedItem.nama_jurusan || "Tidak ada"}</span>
+                  <span className="font-medium text-gray-800">
+                    {selectedItem.nama_jurusan || "Tidak ada"}
+                  </span>
                 </p>
 
                 <Button

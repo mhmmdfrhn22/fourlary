@@ -1,6 +1,12 @@
 const prisma = require("../config/db");
-const path = require("path");
-const fs = require("fs");
+const { v2: cloudinary } = require("cloudinary");
+
+// ✅ Konfigurasi Cloudinary
+cloudinary.config({
+  cloud_name: "dprywyfwm",
+  api_key: "API_KEY_LU",
+  api_secret: "API_SECRET_LU",
+});
 
 // ==============================
 // AMBIL SEMUA POST (opsional filter by user_id)
@@ -21,12 +27,14 @@ exports.getAllPosts = async (user_id) => {
     id: p.id,
     judul: p.judul,
     isi: p.isi,
-    foto: p.foto,
+    kategori_id: p.kategori_id,
+    user_id: p.user_id,
     status: p.status,
     created_at: p.created_at,
     updated_at: p.updated_at,
     kategori: p.kategori?.judul || "-",
-    penulis: p.user?.username || "-",
+    penulis: p.user?.username || "Admin",
+    url_foto: p.foto || null, // 🟢 langsung URL Cloudinary
   }));
 };
 
@@ -63,14 +71,17 @@ exports.getPostById = async (id) => {
 exports.createPost = async (data) => {
   const { judul, kategori_id, isi, user_id, status, foto } = data;
 
+  // 🟢 Kalau upload lewat CloudinaryStorage, `foto` = URL langsung
+  const fotoUrl = foto || null;
+
   const newPost = await prisma.post.create({
     data: {
       judul,
-      kategori_id: Number(kategori_id),
+      kategori_id: kategori_id ? Number(kategori_id) : null,
       isi,
-      user_id: Number(user_id),
+      user_id: user_id ? Number(user_id) : null,
       status: status || "draft",
-      foto: foto || null,
+      foto: fotoUrl, // 🟢 Simpan Cloudinary URL
     },
   });
 
@@ -89,21 +100,18 @@ exports.updatePost = async (id, data) => {
 
   if (!existing) throw new Error("Post tidak ditemukan");
 
-  // Hapus foto lama jika diganti
-  if (foto && existing.foto && foto !== existing.foto) {
-    const oldPath = path.join(__dirname, "../uploads/berita", existing.foto);
-    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-  }
+  // 🟢 Kalau ada foto baru dari Cloudinary, langsung ganti
+  const fotoUrl = foto || existing.foto;
 
   const updated = await prisma.post.update({
     where: { id: Number(id) },
     data: {
-      judul,
-      kategori_id: Number(kategori_id),
-      isi,
-      user_id: Number(user_id),
-      status,
-      foto: foto || existing.foto,
+      judul: judul ?? existing.judul,
+      kategori_id: kategori_id ? Number(kategori_id) : existing.kategori_id,
+      isi: isi ?? existing.isi,
+      user_id: user_id ? Number(user_id) : existing.user_id,
+      status: status ?? existing.status,
+      foto: fotoUrl,
     },
   });
 
@@ -120,9 +128,14 @@ exports.deletePost = async (id) => {
 
   if (!post) return { notFound: true };
 
-  if (post.foto) {
-    const fotoPath = path.join(__dirname, "../uploads/berita", post.foto);
-    if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+  // 🟢 Hapus dari Cloudinary kalau ada URL
+  if (post.foto && post.foto.includes("cloudinary.com")) {
+    const publicId = post.foto
+      .split("/")
+      .slice(-2)
+      .join("/")
+      .replace(/\.[^/.]+$/, "");
+    await cloudinary.uploader.destroy(publicId);
   }
 
   await prisma.post.delete({

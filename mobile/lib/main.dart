@@ -8,9 +8,7 @@ import 'viewmodels/auth_viewmodel.dart';
 void main() {
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthViewModel()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AuthViewModel())],
       child: const MyApp(),
     ),
   );

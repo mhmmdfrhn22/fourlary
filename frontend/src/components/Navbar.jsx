@@ -28,6 +28,7 @@ import {
   CursorArrowRaysIcon,
   ChartPieIcon,
 } from '@heroicons/react/20/solid'
+import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 
 const products = [
@@ -55,7 +56,12 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70">
+    <motion.header
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+      className="sticky top-0 z-50 backdrop-blur-md bg-white/70"
+    >
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
         {/* Logo */}
         <div className="flex lg:flex-1">
@@ -215,6 +221,6 @@ export default function Navbar() {
           </div>
         </DialogPanel>
       </Dialog>
-    </header>
+    </motion.header>
   )
 }

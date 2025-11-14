@@ -66,17 +66,25 @@ exports.getUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { username, password, role_id } = req.body;
-    const hashedPassword = bcrypt.hashSync(password, 8);
+    const id = req.params.id;
 
-    const result = await userService.updateUser(req.params.id, username, hashedPassword, role_id);
-    if (!result.affectedRows)
-      return res.status(404).json({ error: 'User tidak ditemukan.' });
+    let hashedPassword;
+
+    // hanya hash kalau password dikirim dan tidak kosong
+    if (password && password.trim() !== "") {
+      hashedPassword = bcrypt.hashSync(password, 8);
+    }
+
+    await userService.updateUser(id, username, hashedPassword, role_id);
 
     res.json({ message: 'User berhasil diperbarui' });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
+
+
 
 // ✅ Delete user
 exports.deleteUser = async (req, res) => {

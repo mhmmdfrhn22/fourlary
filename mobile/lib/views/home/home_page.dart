@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import '../main_layout.dart';
-import '../auth/login_view.dart'; // pastikan file login lu namanya ini
+import '../auth/login_view.dart';
 import '../news/news_detail_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -11,20 +11,20 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> newsList = [
       {
-        'image': 'https://picsum.photos/200/120?1',
-        'title': 'What Training Do Volleyball Players Need?',
-        'author': 'McKindney',
-        'date': 'Feb 27, 2023',
-        'category': 'Sport',
+        'image': 'assets/images/gambar1.JPG',
+        'title': 'Pemenang Kejuaraan Lomba Teknologi Nasional',
+        'author': 'Desain Media Visual',
+        'date': 'Feb 27, 2025',
+        'category': 'Prestasi',
         'content':
             'Volleyball players require strength, agility, and endurance training to perform their best. This includes plyometrics, cardio, and flexibility workouts...',
       },
       {
-        'image': 'https://picsum.photos/200/120?2',
-        'title': 'Secondary school places: When do parents find out?',
-        'author': 'Rosemary',
-        'date': 'Feb 28, 2023',
-        'category': 'Education',
+        'image': 'assets/images/gambar2.JPG',
+        'title': 'Kira Kira Kapan Diadakannya Acara Transforkrab Selanjutnya?',
+        'author': 'PDD OSIS',
+        'date': 'Feb 28, 2025',
+        'category': 'Acara',
         'content':
             'Parents usually find out about secondary school placements in March. The process varies by country and local education authority...',
       },
@@ -304,7 +304,7 @@ class HomePage extends StatelessWidget {
                               topLeft: Radius.circular(20),
                               bottomLeft: Radius.circular(20),
                             ),
-                            child: Image.network(
+                            child: Image.asset(
                               news['image'],
                               width: 110,
                               height: 100,

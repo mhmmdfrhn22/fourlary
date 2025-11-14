@@ -5,11 +5,16 @@ const path = require("path");
 
 const uploadDir = path.join(__dirname, "../uploads/pembimbing");
 
+// Pastikan folder upload tersedia
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+// ==============================
 // 🔹 Ambil semua pembimbing
+// ==============================
 exports.getAllPembimbing = async () => {
   try {
     const pembimbing = await prisma.pembimbingProfile.findMany({
-      orderBy: { nama: "asc" },
+      orderBy: { created_at: "desc" },
     });
     return pembimbing;
   } catch (err) {
@@ -17,7 +22,9 @@ exports.getAllPembimbing = async () => {
   }
 };
 
+// ==============================
 // 🔹 Ambil pembimbing berdasarkan ID
+// ==============================
 exports.getPembimbingById = async (id) => {
   try {
     const pembimbing = await prisma.pembimbingProfile.findUnique({
@@ -29,7 +36,9 @@ exports.getPembimbingById = async (id) => {
   }
 };
 
+// ==============================
 // 🔹 Tambah pembimbing baru
+// ==============================
 exports.createPembimbing = async (data) => {
   try {
     const pembimbing = await prisma.pembimbingProfile.create({
@@ -48,7 +57,9 @@ exports.createPembimbing = async (data) => {
   }
 };
 
+// ==============================
 // 🔹 Update pembimbing
+// ==============================
 exports.updatePembimbing = async (id, data) => {
   const { nama, nomor_wa, link_wa, jabatan, deskripsi, fotoBaru } = data;
 
@@ -58,7 +69,7 @@ exports.updatePembimbing = async (id, data) => {
     });
     if (!existing) return null;
 
-    // hapus foto lama jika ada foto baru
+    // Hapus foto lama jika ada foto baru
     if (fotoBaru && existing.foto_pembimbing) {
       const oldPath = path.join(uploadDir, existing.foto_pembimbing);
       if (fs.existsSync(oldPath)) {
@@ -88,7 +99,9 @@ exports.updatePembimbing = async (id, data) => {
   }
 };
 
+// ==============================
 // 🔹 Hapus pembimbing
+// ==============================
 exports.deletePembimbing = async (id) => {
   try {
     const existing = await prisma.pembimbingProfile.findUnique({
@@ -96,11 +109,12 @@ exports.deletePembimbing = async (id) => {
     });
     if (!existing) return null;
 
+    // Hapus data di database
     await prisma.pembimbingProfile.delete({
       where: { id_pembimbing: Number(id) },
     });
 
-    // hapus file foto jika ada
+    // Hapus file foto jika ada
     if (existing.foto_pembimbing) {
       const filePath = path.join(uploadDir, existing.foto_pembimbing);
       if (fs.existsSync(filePath)) {

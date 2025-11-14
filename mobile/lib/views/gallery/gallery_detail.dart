@@ -29,7 +29,7 @@ class GalleryDetailPage extends StatelessWidget {
             tag: post['image'],
             child: AspectRatio(
               aspectRatio: 1,
-              child: Image.network(
+              child: Image.asset(
                 post['image'],
                 fit: BoxFit.cover,
                 width: double.infinity,

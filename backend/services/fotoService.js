@@ -1,4 +1,5 @@
 const prisma = require("../config/db");
+const cloudinary = require("../config/cloudinary");
 const path = require("path");
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -138,20 +139,34 @@ exports.updateFoto = async (id, id_kategori, deskripsi, newFoto) => {
 // HAPUS FOTO
 // ==============================
 exports.deleteFoto = async (id) => {
+  const fotoId = Number(id);
   const foto = await prisma.fotoGaleri.findUnique({
-    where: { id_foto: Number(id) },
+    where: { id_foto: fotoId },
   });
 
   if (!foto) throw new Error("Foto tidak ditemukan");
 
-  const fotoPath = path.join(__dirname, "../uploads/galeri", foto.url_foto);
-  if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+  try {
+    // Hapus dulu semua data terkait yang punya FK ke foto.id_foto
+    // Ganti nama model jika schema Prisma-mu berbeda
+    await prisma.$transaction([
+      // hapus likes terkait
+      prisma.likeFoto.deleteMany({ where: { id_foto: fotoId } }),
+      // hapus komentar terkait
+      prisma.komentarFoto.deleteMany({ where: { id_foto: fotoId } }),
+      // jika ada tabel lain yang mereferensikan foto, hapus juga di sini
+    ]);
 
-  await prisma.fotoGaleri.delete({
-    where: { id_foto: Number(id) },
-  });
+    // setelah child dihapus, hapus foto
+    await prisma.fotoGaleri.delete({
+      where: { id_foto: fotoId },
+    });
 
-  return { success: true };
+    return { success: true };
+  } catch (err) {
+    console.error("❌ Gagal menghapus foto:", err);
+    throw new Error("Gagal menghapus foto; cek log server untuk detail.");
+  }
 };
 
 // ==============================

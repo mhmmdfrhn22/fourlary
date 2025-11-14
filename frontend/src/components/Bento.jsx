@@ -1,13 +1,66 @@
+import { motion } from "framer-motion";
+
 export default function Bento() {
+  // Variants untuk animasi grid dan anak-anaknya
+  const container = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        staggerChildren: 0.15,
+        duration: 0.8,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
-    <div className="bg-gray-50 py-24 sm:py-32">
+    <motion.section
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.3 }}
+      className="bg-gray-50 py-24 sm:py-32"
+    >
       <div className="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
-        <h2 className="text-center text-lg font-semibold text-indigo-600">Fitur Fitur Terbaik Fourlary</h2>
-        <p className="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-gray-950 sm:text-5xl">
-          Ini Alasan Kenapa Kamu Harus Menggunakan <span className="text-blue-800">Fourlary🧐</span>
-        </p>
-        <div className="mt-10 grid gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2">
-          <div className="relative lg:row-span-2">
+        {/* Judul */}
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center text-lg font-semibold text-indigo-600"
+        >
+          Fitur Fitur Terbaik Fourlary
+        </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
+          viewport={{ once: true }}
+          className="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-gray-950 sm:text-5xl"
+        >
+          Ini Alasan Kenapa Kamu Harus Menggunakan{" "}
+          <span className="text-blue-800">Fourlary🧐</span>
+        </motion.p>
+
+        {/* Grid Fitur */}
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="mt-10 grid gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2"
+        >
+          {/* 1. Mobile Friendly */}
+          <motion.div variants={item} className="relative lg:row-span-2">
             <div className="absolute inset-px rounded-lg bg-white lg:rounded-l-4xl" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] lg:rounded-l-[calc(2rem+1px)]">
               <div className="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
@@ -29,12 +82,16 @@ export default function Bento() {
               </div>
             </div>
             <div className="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-black/5 lg:rounded-l-4xl" />
-          </div>
-          <div className="relative max-lg:row-start-1">
+          </motion.div>
+
+          {/* 2. Performa Baik */}
+          <motion.div variants={item} className="relative max-lg:row-start-1">
             <div className="absolute inset-px rounded-lg bg-white max-lg:rounded-t-4xl" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] max-lg:rounded-t-[calc(2rem+1px)]">
               <div className="px-8 pt-8 sm:px-10 sm:pt-10">
-                <p className="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">Performa Baik</p>
+                <p className="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">
+                  Performa Baik
+                </p>
                 <p className="mt-2 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">
                   Aplikasi dibangun dengan teknologi modern yang ringan dan cepat
                 </p>
@@ -48,12 +105,16 @@ export default function Bento() {
               </div>
             </div>
             <div className="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-black/5 max-lg:rounded-t-4xl" />
-          </div>
-          <div className="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
+          </motion.div>
+
+          {/* 3. Keamanan Terjamin */}
+          <motion.div variants={item} className="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
             <div className="absolute inset-px rounded-lg bg-white" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)]">
               <div className="px-8 pt-8 sm:px-10 sm:pt-10">
-                <p className="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">Keamanan Terjamin</p>
+                <p className="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">
+                  Keamanan Terjamin
+                </p>
                 <p className="mt-2 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">
                   Data sekolah, akun admin, dan pengguna dilindungi dengan sistem keamanan berlapis.
                 </p>
@@ -67,8 +128,10 @@ export default function Bento() {
               </div>
             </div>
             <div className="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-black/5" />
-          </div>
-          <div className="relative lg:row-span-2">
+          </motion.div>
+
+          {/* 4. Aplikasi Jangka Panjang */}
+          <motion.div variants={item} className="relative lg:row-span-2">
             <div className="absolute inset-px rounded-lg bg-white max-lg:rounded-b-4xl lg:rounded-r-4xl" />
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] max-lg:rounded-b-[calc(2rem+1px)] lg:rounded-r-[calc(2rem+1px)]">
               <div className="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
@@ -88,9 +151,9 @@ export default function Bento() {
               </div>
             </div>
             <div className="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-black/5 max-lg:rounded-b-4xl lg:rounded-r-4xl" />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
-  )
+    </motion.section>
+  );
 }

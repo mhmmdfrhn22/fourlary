@@ -1,72 +1,84 @@
 const kategoriFotoService = require("../services/kategoriFotoService");
 
 // ✅ Ambil semua kategori
-exports.getAllKategori = (req, res) => {
-  kategoriFotoService.getAllKategori((err, results) => {
-    if (err) return res.status(500).json({ message: "Gagal mengambil data kategori", error: err });
+exports.getAllKategori = async (req, res) => {
+  try {
+    const results = await kategoriFotoService.getAllKategori();
     res.json(results);
-  });
+  } catch (err) {
+    console.error("❌ Gagal mengambil data kategori:", err);
+    res.status(500).json({ message: "Gagal mengambil data kategori", error: err.message });
+  }
 };
 
 // ✅ Ambil kategori berdasarkan ID
-exports.getKategoriById = (req, res) => {
-  const { id } = req.params;
+exports.getKategoriById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const kategori = await kategoriFotoService.getKategoriById(id);
 
-  kategoriFotoService.getKategoriById(id, (err, results) => {
-    if (err) return res.status(500).json({ message: "Gagal mengambil kategori", error: err });
-    if (results.length === 0) return res.status(404).json({ message: "Kategori tidak ditemukan" });
-    res.json(results[0]);
-  });
+    if (!kategori) return res.status(404).json({ message: "Kategori tidak ditemukan" });
+
+    res.json(kategori);
+  } catch (err) {
+    console.error("❌ Gagal mengambil kategori:", err);
+    res.status(500).json({ message: "Gagal mengambil kategori", error: err.message });
+  }
 };
 
 // ✅ Tambah kategori baru
-exports.createKategori = (req, res) => {
-  const { nama_kategori, dibuat_oleh } = req.body;
+exports.createKategori = async (req, res) => {
+  try {
+    const { nama_kategori, dibuat_oleh } = req.body;
 
-  // Hanya nama_kategori yang wajib
-  if (!nama_kategori) {
-    return res.status(400).json({ message: "Nama kategori harus diisi" });
-  }
-
-  // Kalau tidak ada dibuat_oleh, isi NULL
-  const dibuatOlehValue = dibuat_oleh || null;
-
-  kategoriFotoService.createKategori(nama_kategori, dibuatOlehValue, (err, result) => {
-    if (err) {
-      console.error("❌ Gagal membuat kategori:", err);
-      return res.status(500).json({ message: "Gagal membuat kategori", error: err });
+    if (!nama_kategori) {
+      return res.status(400).json({ message: "Nama kategori harus diisi" });
     }
+
+    const dibuatOlehValue = dibuat_oleh || null;
+    const result = await kategoriFotoService.createKategori(nama_kategori, dibuatOlehValue);
 
     res.status(201).json({
       message: "Kategori berhasil dibuat",
-      id: result.insertId,
+      id: result.id_kategori, // menyesuaikan field di Prisma
       nama_kategori,
       dibuat_oleh: dibuatOlehValue,
     });
-  });
+  } catch (err) {
+    console.error("❌ Gagal membuat kategori:", err);
+    res.status(500).json({ message: "Gagal membuat kategori", error: err.message });
+  }
 };
 
 // ✅ Update kategori
-exports.updateKategori = (req, res) => {
-  const { id } = req.params;
-  const { nama_kategori } = req.body;
+exports.updateKategori = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nama_kategori } = req.body;
 
-  if (!nama_kategori) {
-    return res.status(400).json({ message: "Nama kategori harus diisi" });
-  }
+    if (!nama_kategori) {
+      return res.status(400).json({ message: "Nama kategori harus diisi" });
+    }
 
-  kategoriFotoService.updateKategori(id, nama_kategori, (err) => {
-    if (err) return res.status(500).json({ message: "Gagal memperbarui kategori", error: err });
+    await kategoriFotoService.updateKategori(id, nama_kategori);
+
     res.json({ message: "Kategori berhasil diperbarui" });
-  });
+  } catch (err) {
+    console.error("❌ Gagal memperbarui kategori:", err);
+    res.status(500).json({ message: "Gagal memperbarui kategori", error: err.message });
+  }
 };
 
 // ✅ Hapus kategori
-exports.deleteKategori = (req, res) => {
-  const { id } = req.params;
+exports.deleteKategori = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  kategoriFotoService.deleteKategori(id, (err) => {
-    if (err) return res.status(500).json({ message: "Gagal menghapus kategori", error: err });
+    await kategoriFotoService.deleteKategori(id);
+
     res.json({ message: "Kategori berhasil dihapus" });
-  });
+  } catch (err) {
+    console.error("❌ Gagal menghapus kategori:", err);
+    res.status(500).json({ message: "Gagal menghapus kategori", error: err.message });
+  }
 };

@@ -6,13 +6,23 @@ const upload = require("../middleware/upload");
 
 // ✅ Routes
 router.get("/count", fotoCtrl.getFotoCount);
+router.get("/laporan/pdf", fotoCtrl.generatePdfReport);
+router.get("/user", fotoCtrl.getFotoByUploader);           // 🔹 pindah ke atas
+router.get("/count/:user_id", fotoCtrl.getFotoCountByUser); // 🔹 juga ke atas
 router.get("/", fotoCtrl.getAllFoto);
-router.get("/laporan/pdf", fotoCtrl.generatePdfReport); // <- laporan PDF (top N, optional ?limit=10)
 router.get("/:id", fotoCtrl.getFotoById);
-router.post("/", upload.single("foto"), fotoCtrl.createFoto);
+
+router.post("/", (req, res, next) => {
+  upload.single("foto")(req, res, (err) => {
+    if (err) {
+      console.error("⚠️ Multer Error:", err);
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, fotoCtrl.createFoto);
+
 router.put("/:id", upload.single("foto"), fotoCtrl.updateFoto);
 router.delete("/:id", fotoCtrl.deleteFoto);
-router.get("/user", fotoCtrl.getFotoByUploader);// 🔹 Ambil foto berdasarkan uploader
-router.get("/count/:user_id", fotoCtrl.getFotoCountByUser);
 
 module.exports = router;

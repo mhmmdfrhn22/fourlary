@@ -6,19 +6,18 @@ const prisma = require("../config/db");
 exports.getAllJurusan = async () => {
   const jurusanList = await prisma.jurusanSekolah.findMany({
     include: {
-      _count: { select: { pekerjaan: true } }, // hitung jumlah pekerjaan terkait
+      _count: { select: { pekerjaan: true } }, // ✅ hanya relasi ini yang ada di schema
     },
     orderBy: { created_at: "desc" },
   });
 
-  // Format hasil agar mirip versi SQL lama
   return jurusanList.map((j) => ({
     id_jurusan: j.id_jurusan,
     nama_jurusan: j.nama_jurusan,
     deskripsi: j.deskripsi,
     created_at: j.created_at,
     updated_at: j.updated_at,
-    total_pekerjaan: j._count.pekerjaan,
+    total_pekerjaan: j._count.pekerjaan, // ✅ ganti ini juga biar sesuai
   }));
 };
 
@@ -27,10 +26,7 @@ exports.getAllJurusan = async () => {
 // ==============================
 exports.createJurusan = async (nama_jurusan, deskripsi = null) => {
   const jurusanBaru = await prisma.jurusanSekolah.create({
-    data: {
-      nama_jurusan,
-      deskripsi,
-    },
+    data: { nama_jurusan, deskripsi },
   });
   return jurusanBaru;
 };
@@ -46,10 +42,7 @@ exports.updateJurusan = async (id, nama_jurusan, deskripsi = null) => {
 
   const updated = await prisma.jurusanSekolah.update({
     where: { id_jurusan: Number(id) },
-    data: {
-      nama_jurusan,
-      deskripsi,
-    },
+    data: { nama_jurusan, deskripsi },
   });
   return updated;
 };

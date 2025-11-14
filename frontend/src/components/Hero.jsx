@@ -1,6 +1,14 @@
+import { motion } from "framer-motion";
+
 export default function Hero() {
   return (
-    <div className="relative isolate px-6 pt-14 lg:px-8">
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.3 }}
+      className="relative isolate px-6 pt-14 lg:px-8"
+    >
       {/* Background Shape Atas */}
       <div
         aria-hidden="true"
@@ -19,15 +27,28 @@ export default function Hero() {
 
       {/* Isi Hero */}
       <div className="mx-auto max-w-3xl py-20 sm:py-28 lg:py-4">
-        <div className="hidden sm:mb-8 sm:flex sm:justify-center">
-          <div className="relative rounded-full px-3 py-1 text-base  text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-            Selamat datang di{" "}
-            <span className="font-semibold">Fourlary✨</span>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          viewport={{ once: true }}
+          className="hidden sm:mb-8 sm:flex sm:justify-center"
+        >
+          <div className="relative rounded-full px-3 py-1 text-base text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
+            Selamat datang di <span className="font-semibold">Fourlary✨</span>
           </div>
-        </div>
-        <div className="text-center">
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
           <h1 className="text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
-            Jelajahi Bersama Galeri SMK Negeri 4 Bogor Dengan <span className="text-blue-800">Fourlary👋</span>
+            Jelajahi Bersama Galeri SMK Negeri 4 Bogor Dengan{" "}
+            <span className="text-blue-800">Fourlary👋</span>
           </h1>
           <p className="mt-8 text-lg font-normal text-gray-500 sm:text-xl">
             Temukan informasi seputar sekolah, galeri kegiatan, prestasi,
@@ -44,11 +65,17 @@ export default function Hero() {
               Tentang Sekolah <span aria-hidden="true">→</span>
             </a>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Video Section */}
-      <div className="mt-16 flex justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.4 }}
+        viewport={{ once: true }}
+        className="mt-16 flex justify-center"
+      >
         <video
           className="w-full max-w-7xl rounded-2xl shadow-lg"
           autoPlay
@@ -59,7 +86,7 @@ export default function Hero() {
           <source src="/videos/sekolah.mp4" type="video/mp4" />
           Browser kamu tidak mendukung video.
         </video>
-      </div>
+      </motion.div>
 
       {/* Background Shape Bawah */}
       <div
@@ -76,6 +103,6 @@ export default function Hero() {
           opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72rem]"
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

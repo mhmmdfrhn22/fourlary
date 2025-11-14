@@ -9,14 +9,20 @@ export default function DashboardHomePDD() {
   const [userId, setUserId] = useState(null)
 
   useEffect(() => {
-    // contoh ambil userId dari localStorage
-    const storedUserId = localStorage.getItem("userId")
-    if (storedUserId) {
-      console.log("✅ User ID ditemukan dari localStorage:", storedUserId)
-      setUserId(storedUserId)
+    const storedUser = localStorage.getItem("user")
+
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser)
+        console.log("User ditemukan, id:", parsed.id)
+        setUserId(parsed.id)               // <-- FIX DISINI
+      } catch {
+        console.log("Gagal parse user, fallback ke 3")
+        setUserId(3)
+      }
     } else {
-      console.warn("⚠️ Tidak ada userId di localStorage — gunakan id default 3")
-      setUserId(3) // fallback sementara
+      console.log("Tidak ada user di localStorage, fallback 3")
+      setUserId(3)
     }
   }, [])
 

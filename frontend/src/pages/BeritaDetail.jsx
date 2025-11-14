@@ -10,23 +10,51 @@ export default function BeritaDetail() {
   const [beritaTerkini, setBeritaTerkini] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const safeSrc = (path) =>
-    path
-      ? `http://localhost:3000/uploads/berita/${path}`
-      : "http://localhost:3000/uploads/placeholder-berita.png"
+  // ✅ Safe image function (otomatis pilih Cloudinary, lokal, atau placeholder)
+  const safeSrc = (item) => {
+    if (item?.url_foto && item.url_foto.startsWith("http")) {
+      return item.url_foto
+    }
+
+    if (item?.gambar?.url && item.gambar.url.startsWith("http")) {
+      return item.gambar.url
+    }
+
+    if (item?.foto) {
+      if (item.foto.startsWith("http")) {
+        return item.foto
+      }
+      return `http://localhost:3000/uploads/berita/${item.foto}`
+    }
+
+    return "https://res.cloudinary.com/dprywyfwm/image/upload/v1762822108/uploads/placeholder-berita.png"
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Detail berita
+        // ✅ Ambil detail berita
         const res = await fetch(`http://localhost:3000/api/posts/${id}`)
         const data = await res.json()
+
+        // Kalau berita bukan "published", jangan tampilkan
+        if (data.status?.toLowerCase() !== "published") {
+          setBerita(null)
+          setLoading(false)
+          return
+        }
+
         setBerita(data)
 
-        // Berita terkini
+        // ✅ Ambil semua berita dan filter "published" aja
         const resAll = await fetch("http://localhost:3000/api/posts")
         const allData = await resAll.json()
-        setBeritaTerkini(allData.slice(0, 3)) // ambil 3 berita terbaru
+        const published = allData
+          .filter((item) => item.status?.toLowerCase() === "published")
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          .slice(0, 3)
+
+        setBeritaTerkini(published)
       } catch (err) {
         console.error("Gagal mengambil data:", err)
       } finally {
@@ -48,7 +76,7 @@ export default function BeritaDetail() {
   if (!berita) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <p className="text-gray-500">Berita tidak ditemukan</p>
+        <p className="text-gray-500">Berita tidak ditemukan atau belum diterbitkan.</p>
       </div>
     )
   }
@@ -62,7 +90,7 @@ export default function BeritaDetail() {
             {/* Gambar Utama */}
             <div className="w-full h-[320px] sm:h-[400px] overflow-hidden rounded-2xl">
               <img
-                src={safeSrc(berita.foto)}
+                src={safeSrc(berita)}
                 alt={berita.judul}
                 className="w-full h-full object-cover"
               />
@@ -122,7 +150,7 @@ export default function BeritaDetail() {
             <CardContent className="p-0">
               <div className="relative w-full h-[150px] bg-gray-100 overflow-hidden">
                 <img
-                  src={safeSrc(item.foto)}
+                  src={safeSrc(item)}
                   alt={item.judul}
                   className="w-full h-full object-cover"
                 />

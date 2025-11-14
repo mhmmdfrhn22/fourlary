@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -31,62 +31,77 @@ const chartConfig = {
   },
 }
 
-export function ChartComponentPDD({ userId }) {
+export function ChartComponentPDD({ userId: propUserId }) {
+  const [userId, setUserId] = useState(null)
   const [timeRange, setTimeRange] = useState("7d")
   const [chartData, setChartData] = useState([])
   const [loading, setLoading] = useState(false)
 
+  // Ambil userId saat mount
   useEffect(() => {
-    // ✅ Debug: pastikan userId benar-benar terkirim dari parent
-    console.log("🧩 [ChartComponentPDD] Diterima userId:", userId)
+    let uid = propUserId
 
-    if (!userId) {
-      console.warn("⚠️ [ChartComponentPDD] userId tidak ditemukan, hentikan fetch data grafik.")
-      setChartData([]) // kosongkan agar tidak error
-      return
+    if (!uid) {
+      const storedUser = localStorage.getItem("user")
+
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser)
+          uid = parsed.id
+        } catch {
+          uid = 3
+        }
+      } else {
+        uid = 3
+      }
     }
+
+    console.log("USER ID YANG DIPAKAI:", uid)
+    setUserId(Number(uid))
+  }, [propUserId])
+
+  // Fetch data statistik
+  useEffect(() => {
+    if (!userId || isNaN(userId)) return
 
     async function fetchData() {
       setLoading(true)
+      setChartData([])
+
       try {
         const url = `http://localhost:3000/api/like-foto/stats/${userId}?range=${timeRange}`
+        console.log("Fetching:", url)
 
         const res = await fetch(url)
-        if (!res.ok) throw new Error("Gagal mengambil data perkembangan like")
+        if (!res.ok) throw new Error("Gagal fetch data")
 
         const data = await res.json()
+        console.log("DATA DARI BACKEND:", data)
 
-        // Pastikan data berbentuk array
-        const safeData = Array.isArray(data) ? data : [data]
+        const formatted = Array.isArray(data)
+          ? data.map((item) => ({
+            date: item.date,   // pakai format YYYY-MM-DD langsung
+            likes: item.total ?? 0,
+          }))
+          : [];
 
-        // Format data untuk chart
-        const formatted = safeData.map((item) => {
-          const date = item.date ? new Date(item.date) : new Date()
-          return {
-            date: date.toISOString().split("T")[0], // format YYYY-MM-DD
-            likes: item.total ?? 0, // total dari backend
-          }
-        })
 
-        // Tambahkan 1 titik dummy jika hanya ada satu data biar grafik terlihat
+        // Antisipasi data cuma satu titik
         if (formatted.length === 1) {
-          formatted.push({
-            date: formatted[0].date,
-            likes: formatted[0].likes,
-          })
+          formatted.push({ ...formatted[0] })
         }
 
-        console.log("📊 [ChartComponentPDD] Data final untuk chart:", formatted)
         setChartData(formatted)
       } catch (error) {
-        console.error("❌ [ChartComponentPDD] Gagal fetch data:", error)
+        console.error("ERROR AMBIL DATA:", error)
+        setChartData([])
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [timeRange, userId])
+  }, [userId, timeRange])
 
   return (
     <Card className="pt-0">
@@ -94,14 +109,16 @@ export function ChartComponentPDD({ userId }) {
         <div className="grid flex-1 gap-1">
           <CardTitle>Grafik Perkembangan Like</CardTitle>
           <CardDescription>
-            Menampilkan jumlah like yang diterima user dalam {timeRange}
+            Menampilkan jumlah like yang diterima user ID {userId} dalam{" "}
+            {timeRange === "7d"
+              ? "7 Hari Terakhir"
+              : timeRange === "14d"
+                ? "14 Hari Terakhir"
+                : "30 Hari Terakhir"}
           </CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
-            aria-label="Pilih range waktu"
-          >
+          <SelectTrigger className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex">
             <SelectValue placeholder="Pilih range" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -114,7 +131,7 @@ export function ChartComponentPDD({ userId }) {
 
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {loading ? (
-          <div className="flex items-center justify-center h-[250px] text-gray-500">
+          <div className="flex items-center justify-center h-[250px] text-gray-500 animate-pulse">
             Memuat grafik...
           </div>
         ) : chartData.length > 0 ? (
@@ -127,30 +144,43 @@ export function ChartComponentPDD({ userId }) {
                 </linearGradient>
               </defs>
 
-              <CartesianGrid vertical={false} />
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+
               <XAxis
                 dataKey="date"
+                interval={0} // tampilkan SEMUA tanggal, tidak diskip
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                minTickGap={32}
+                minTickGap={16}
                 tickFormatter={(value) => {
-                  const date = new Date(value)
-                  return date.toLocaleDateString("id-ID", {
-                    month: "short",
+                  const d = new Date(value + "T00:00:00")
+                  return d.toLocaleDateString("id-ID", {
                     day: "numeric",
+                    month: "short",
                   })
                 }}
               />
+
+              {/* FIX UTAMA: grafik tidak terpotong & tidak masuk angka minus */}
+              <YAxis
+                allowDecimals={false}
+                domain={[0, "auto"]}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => value.toFixed(0)}  // tanpa koma
+              />
+
 
               <ChartTooltip
                 cursor={false}
                 content={
                   <ChartTooltipContent
                     labelFormatter={(value) =>
-                      new Date(value).toLocaleDateString("id-ID", {
-                        month: "short",
+                      new Date(value + "T00:00:00").toLocaleDateString("id-ID", {
                         day: "numeric",
+                        month: "long",
+                        year: "numeric",
                       })
                     }
                     indicator="dot"
@@ -158,12 +188,15 @@ export function ChartComponentPDD({ userId }) {
                 }
               />
 
+              {/* FIX BESAR: NATURAL → MONOTONE */}
               <Area
                 dataKey="likes"
-                type="natural"
+                type="monotone"
                 fill="url(#fillLikes)"
                 stroke="var(--chart-2)"
+                strokeWidth={2}
               />
+
               <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
           </ChartContainer>

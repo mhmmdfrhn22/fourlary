@@ -16,19 +16,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<Map<String, String>> onboardingData = [
     {
-      "image": "assets/images/onboarding1.png",
+      "image": "assets/images/onboarding4.png",
       "title": "Ayo Jelajahi Galeri Fourlary!",
       "subtitle":
           "Ayo Jelajahi 100 lebih Foto Foto Menarik dan Informatif Di Halaman Galeri Fourlary!",
     },
     {
-      "image": "assets/images/onboarding1.png",
+      "image": "assets/images/onboarding2.png",
       "title": "Cari Tahu Berita Terbaru!",
       "subtitle":
           "Jelajahi Juga Berbagai Berita Berita Hangat Seputar SMK Negeri 4 Bogor Saat Ini!",
     },
     {
-      "image": "assets/images/onboarding1.png",
+      "image": "assets/images/onboarding3.png",
       "title": "Mulai Jelajah Sekarang!",
       "subtitle":
           "Masuk atau Daftarkan Akun Anda dan Mulai Menjelajah Fitur Bersama Kami!",

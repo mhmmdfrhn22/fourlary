@@ -1,6 +1,8 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import SplashScreen from "./components/SplashScreen";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Gallery from "./pages/Gallery";
@@ -13,6 +15,8 @@ import PembinatView from "./pages/PembinatView";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import FloatingInstallButton from "./components/FloatingInstallButton";
+
 
 // Dashboard Admin
 import Dashboard from "./pages/Dashboard";
@@ -40,12 +44,40 @@ import JurusanSekolah from "./pages/JurusanSekolah";
 function App() {
   const location = useLocation();
 
+  // State untuk splash
+  const [showSplash, setShowSplash] = useState(false);
+
+  // Jalankan hanya saat pertama kali halaman direfresh
+  useEffect(() => {
+    const hasShownSplash = sessionStorage.getItem("hasShownSplash");
+
+    if (!hasShownSplash) {
+      // tampilkan splash dulu
+      setShowSplash(true);
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+        sessionStorage.setItem("hasShownSplash", "true");
+      }, 2500); // durasi splash
+
+      return () => clearTimeout(timer);
+    } else {
+      // jika sudah pernah tampil di sesi ini, langsung sembunyikan
+      setShowSplash(false);
+    }
+  }, []);
+
+
   // Sembunyikan Navbar & Footer di halaman dashboard, login, register
   const hideLayout =
     location.pathname.startsWith("/dashboard") ||
     location.pathname.startsWith("/dashboard-pdd") ||
     location.pathname === "/login" ||
     location.pathname === "/register";
+
+  // Tampilkan SplashScreen dulu sebelum semua halaman
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   return (
     <>
@@ -115,6 +147,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!hideLayout && <Footer />}
+      {!hideLayout && <FloatingInstallButton />}
     </>
   );
 }
