@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:iconsax/iconsax.dart';
 
 class NewsDetailPage extends StatelessWidget {
   final Map<String, dynamic> news;
+
+  // Fungsi untuk memformat tanggal
+  String formatDate(String dateString) {
+    final DateTime date = DateTime.parse(dateString);
+    return DateFormat('dd MMM yyyy').format(date); // Format: 18 Nov 2025
+  }
 
   const NewsDetailPage({super.key, required this.news});
 
@@ -19,7 +26,10 @@ class NewsDetailPage extends StatelessWidget {
         ),
         title: Text(
           news['category'],
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
       ),
@@ -30,11 +40,31 @@ class NewsDetailPage extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                news['image'],
+              child: Image.network(
+                // Ubah Image.asset() menjadi Image.network()
+                news['image'], // Pastikan URL yang diterima dari API valid
                 width: double.infinity,
                 height: 220,
                 fit: BoxFit.cover,
+                loadingBuilder:
+                    (
+                      BuildContext context,
+                      Widget child,
+                      ImageChunkEvent? loadingProgress,
+                    ) {
+                      if (loadingProgress == null) {
+                        return child;
+                      } else {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      (loadingProgress.expectedTotalBytes ?? 1)
+                                : null,
+                          ),
+                        );
+                      }
+                    },
               ),
             ),
             const SizedBox(height: 16),
@@ -55,7 +85,10 @@ class NewsDetailPage extends StatelessWidget {
                 const SizedBox(width: 8),
                 Icon(Iconsax.calendar_1, color: Colors.grey[600], size: 16),
                 const SizedBox(width: 4),
-                Text(news['date'], style: TextStyle(color: Colors.grey[700])),
+                Text(
+                  formatDate(news['date']), // Memanggil formatDate untuk hanya menampilkan tanggal
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
               ],
             ),
             const SizedBox(height: 20),

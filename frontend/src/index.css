@@ -122,3 +122,20 @@
 [data-state="open"] {
   z-index: 9999 !important;
 }
+
+/* Biar SweetAlert2 selalu di atas shadcn Dialog */
+.swal2-container {
+  z-index: 9999 !important;
+}
+
+@media (max-width: 768px) {
+    .gallery-image {
+        width: 100%;         /* Memastikan gambar mengisi lebar */
+        height: auto;        /* Menjaga rasio gambar */
+    }
+
+    .comment-section {
+        max-height: 60vh;    /* Batas tinggi untuk komentar */
+        overflow-y: auto;    /* Scroll komentar */
+    }
+}
