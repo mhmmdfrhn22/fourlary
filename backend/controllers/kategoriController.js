@@ -1,42 +1,123 @@
-const db = require('../config/db');
+const kategoriService = require("../services/kategoriService");
 
-exports.getAllKategori = (req, res) => {
-  db.query('SELECT * FROM kategori', (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
+// ✅ Ambil semua kategori
+exports.getAllKategori = async (req, res) => {
+  try {
+    const kategori = await kategoriService.getAllKategori();
+    res.json(kategori);
+  } catch (err) {
+    console.error("Error getAllKategori:", err);
+    res.status(500).json({
+      message: "Gagal mengambil data kategori",
+      error: err.message,
+    });
+  }
 };
 
-exports.createKategori = (req, res) => {
-  const { judul } = req.body;
-  db.query('INSERT INTO kategori (judul) VALUES (?)', [judul], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.status(201).json({ id: results.insertId, judul });
-  });
+// ✅ Tambah kategori baru
+exports.createKategori = async (req, res) => {
+  try {
+    const { judul } = req.body;
+
+    if (!judul) {
+      return res.status(400).json({
+        message: "Judul kategori harus diisi",
+      });
+    }
+
+    const kategoriBaru = await kategoriService.createKategori(judul);
+
+    res.status(201).json({
+      message: "Kategori berhasil ditambahkan",
+      data: kategoriBaru,
+    });
+  } catch (err) {
+    console.error("Error createKategori:", err);
+    res.status(500).json({
+      message: "Gagal menambah kategori",
+      error: err.message,
+    });
+  }
 };
 
-exports.getKategoriById = (req, res) => {
-  const { id } = req.params;
-  db.query('SELECT * FROM kategori WHERE id = ?', [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    if (!results.length) return res.status(404).json({ error: 'Kategori not found' });
-    res.json(results[0]);
-  });
+// ✅ Ambil kategori berdasarkan ID
+exports.getKategoriById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const kategori = await kategoriService.getKategoriById(id);
+
+    if (!kategori) {
+      return res.status(404).json({
+        message: "Kategori tidak ditemukan",
+      });
+    }
+
+    res.json(kategori);
+  } catch (err) {
+    console.error("Error getKategoriById:", err);
+    res.status(500).json({
+      message: "Gagal mengambil kategori",
+      error: err.message,
+    });
+  }
 };
 
-exports.updateKategori = (req, res) => {
-  const { id } = req.params;
-  const { judul } = req.body;
-  db.query('UPDATE kategori SET judul = ? WHERE id = ?', [judul, id], (err) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json({ message: 'Kategori updated' });
-  });
+// ✅ Update kategori
+exports.updateKategori = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { judul } = req.body;
+
+    if (!judul) {
+      return res.status(400).json({
+        message: "Judul kategori harus diisi",
+      });
+    }
+
+    const kategori = await kategoriService.getKategoriById(id);
+    if (!kategori) {
+      return res.status(404).json({
+        message: "Kategori tidak ditemukan",
+      });
+    }
+
+    const updated = await kategoriService.updateKategori(id, judul);
+
+    res.json({
+      message: "Kategori berhasil diperbarui",
+      data: updated,
+    });
+  } catch (err) {
+    console.error("Error updateKategori:", err);
+    res.status(500).json({
+      message: "Gagal memperbarui kategori",
+      error: err.message,
+    });
+  }
 };
 
-exports.deleteKategori = (req, res) => {
-  const { id } = req.params;
-  db.query('DELETE FROM kategori WHERE id = ?', [id], (err) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json({ message: 'Kategori deleted' });
-  });
+// ✅ Hapus kategori
+exports.deleteKategori = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const kategori = await kategoriService.getKategoriById(id);
+    if (!kategori) {
+      return res.status(404).json({
+        message: "Kategori tidak ditemukan",
+      });
+    }
+
+    await kategoriService.deleteKategori(id);
+
+    res.json({
+      message: "Kategori berhasil dihapus",
+    });
+  } catch (err) {
+    console.error("Error deleteKategori:", err);
+    res.status(500).json({
+      message: "Gagal menghapus kategori",
+      error: err.message,
+    });
+  }
 };
